@@ -96,20 +96,39 @@ grep -Fx CONFIG_USE_APK=y .config
 grep -Fx 'CONFIG_GRUB_BOOTOPTS="ipv6.disable=1"' .config
 grep -Fx '# CONFIG_PACKAGE_dnsmasq_full_dhcpv6 is not set' .config
 grep -Fx CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn=y .config
+grep -Fx CONFIG_PACKAGE_kmod-bonding=y .config
 jobs="${OPENWRT_JOBS:-$(nproc)}"
 export GOPROXY='https://proxy.golang.org|direct'
 make -j"$jobs" download
-make -j"$jobs" V=s > build.log 2>&1 || { tail -n 180 build.log; exit 1; }
+make -j"$jobs" V=s 2>&1 | tee build.log | awk '/^time:/ { print; fflush() }' ||
+    { tail -n 180 build.log; exit 1; }
 target=bin/targets/x86/64
 image=openwrt-x86-64-generic-squashfs-combined-efi.img.gz
 manifest=openwrt-x86-64-generic.manifest
 gzip -t "$target/$image"
-python3 - "$repo/manifests/$manifest" "$target/$manifest" <<'PY'
+rootfs=build_dir/target-x86_64_musl/linux-x86_64/root.squashfs
+unsquash=staging_dir/host/bin/unsquashfs4
+"$unsquash" -cat "$rootfs" lib/apk/db/installed > .ui-inputs/installed
+python3 - "$repo/manifests/$manifest" "$target/$manifest" .ui-inputs/installed <<'PY'
+import re
 import sys
 def versions(path):
     with open(path) as stream:
         return dict(line.strip().split(" - ", 1) for line in stream)
-old, new = map(versions, sys.argv[1:])
+old, new = map(versions, sys.argv[1:3])
+old["kmod-bonding"] = old["kmod-macvlan"]
+kernel_release = r"(\d+\.\d+\.\d+)~[a-f0-9]{32}(-r\d+)"
+old_kernel, new_kernel = (re.fullmatch(kernel_release, packages["kernel"]) for packages in (old, new))
+if not old_kernel or not new_kernel or old_kernel.groups() != new_kernel.groups():
+    raise SystemExit(f"Unexpected kernel release: {new['kernel']}")
+old["kernel"] = new["kernel"]
+with open(sys.argv[3]) as apk_db:
+    records = [dict(line.split(":", 1) for line in block.splitlines() if ":" in line)
+               for block in apk_db.read().split("\n\n")]
+installed = {record["P"]: record for record in records if "P" in record}
+for name in new:
+    if name.startswith("kmod-") and f"kernel={new['kernel']}" not in installed[name].get("D", "").split():
+        raise SystemExit(f"{name} does not match the packaged kernel ABI")
 delta = {k: (old.get(k), new.get(k)) for k in old.keys() | new.keys() if old.get(k) != new.get(k)}
 if delta:
     raise SystemExit(f"Package manifest drift: {delta}")

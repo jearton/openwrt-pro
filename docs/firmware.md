@@ -24,7 +24,7 @@ make -j"$(nproc)" V=s
 3. 应用[补丁索引](../patches/README.md)中对应的适配。将 image-files/network-ui 的 LuCI 运行文件作为 OpenWrt 的 files/ overlay，使用同一 LuCI 构建树的 po2lmo 编译菜单翻译，再构建 EFI 镜像。验收计划包括包版本、UEFI 启动、IPv6 禁用、LuCI、Docker 数据目录和 DNS 链路。
 4. 对新镜像使用独立磁盘和测试客户端。备份配置并保留旧启动盘。确认旧盘的 LAN、WAN 和 IPv6 设置后再执行回退。
 
-完整网络界面配置的自动构建入口为 `scripts/build-full.sh`。GitHub Actions 使用 Ubuntu x86_64 runner 和同一脚本。脚本提取并校验所需的 Quickstart 资产，再与仓库中的 470 项 APK 名称和版本比对。
+完整网络界面配置的自动构建入口为 `scripts/build-full.sh`。GitHub Actions 使用 Ubuntu x86_64 runner 和同一脚本。脚本校验 Quickstart 资产，对照已发布的 APK 清单，要求完整构建额外包含 `kmod-bonding`，并验证每个内核模块的 ABI 与镜像内核一致。
 
 ```sh
 ./scripts/build-full.sh ./work/openwrt-full ./artifacts/firmware-candidate

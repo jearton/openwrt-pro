@@ -36,6 +36,7 @@
 | 网络 → 负载均衡、定时限速、SQM | 多 WAN 策略、按规则限速、队列管理 | [mwan3 nftables 版本](https://github.com/dl12345/mwan3)、[Lean LuCI](https://github.com/coolsnowwolf/luci/tree/f43c53a60f11f5d635b7127c775e9c04e2be191d)、[EQoS Plus](https://github.com/sirpdboy/luci-app-eqosplus)、[SQM](https://github.com/tohojo/sqm-scripts) |
 | 网络 → 流量统计、网速测试、IP/MAC 绑定 | 客户端和接口计量、测速、静态邻居 | [nlbwmon](https://github.com/jow-/nlbwmon)、[vnStat 配方](https://github.com/openwrt/packages/tree/093d551675b1119a06ef224d419905e8d6b2af1a/net/vnstat2)、[网速测试 LuCI](https://github.com/muink/luci-app-netspeedtest)、[iperf3](https://github.com/esnet/iperf)、[LibreSpeed](https://github.com/librespeed/speedtest-go)、[Lean LuCI](https://github.com/coolsnowwolf/luci/tree/f43c53a60f11f5d635b7127c775e9c04e2be191d) |
 | 网络 → DHCP/DNS、Macvlan | 定制快捷页面，沿用 OpenWrt 原生配置接口 | [本项目菜单和页面](image-files/network-ui)、[netifd](https://git.openwrt.org/project/netifd.git) |
+| 网络 → 接口 | 完整版构建启用以太网链路聚合驱动 `kmod-bonding` | [OpenWrt bonding 配方](https://github.com/openwrt/openwrt/blob/v25.12.6/package/kernel/linux/modules/netsupport.mk) |
 
 Technitium 是按需部署的 [Docker 容器](containers/technitium/compose.yaml)，用于本地权威 DNS 区域。安装方式见 [DNS 文档](docs/technitium.md)，源码见 [Technitium DNS Server](https://github.com/TechnitiumSoftware/DnsServer)。镜像包含的具体版本见 [APK 清单](manifests/openwrt-x86-64-generic.manifest)。
 
