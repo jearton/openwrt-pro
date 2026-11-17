@@ -32,6 +32,8 @@ diskutil eject /dev/diskN
 
 在控制台执行 `uci show network`、`ip -br link` 和 `ip -br -4 addr`。把网线逐口插拔，观察哪个 Linux 接口变成 `LOWER_UP`，对照配置确认 LAN 设备。把管理电脑接到 LAN，设置以太网 IPv4 为 DHCP，访问 `http://192.168.1.1`。直连测试时，若确认接的是 LAN 且 DHCP 暂未下发地址，可给电脑临时设置 `192.168.1.2/24`。接 WAN 或未加入 LAN 的端口时需要换到 LAN。要用其它口管理，可先通过 LAN 登录，在「网络 → 接口 → 设备」把所需端口加入 LAN 网桥，同时保留当前可用 LAN 口。设置 root 密码，核对 WAN/LAN 和 IPv6 状态，再按需启用服务。
 
+LAN 的 IPv4 DHCP 服务器默认启用，默认网段的地址池为 `192.168.1.100–192.168.1.249`，租期 12 小时。WAN 作为 IPv4 DHCP 客户端从上游取地址，WAN 侧 DHCP 服务器关闭。用 `uci get network.wan.device` 查看当前 WAN 对应的接口。
+
 从 U 盘启动时，系统和配置会留在 U 盘。需要保留原内置盘时，关机后拔掉试用 U 盘即可回到原启动盘。
 
 ## 安装到内置 SSD
