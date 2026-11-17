@@ -34,6 +34,8 @@ diskutil eject /dev/diskN
 
 LAN 的 IPv4 DHCP 服务器默认启用，默认网段的地址池为 `192.168.1.100–192.168.1.249`，租期 12 小时。WAN 作为 IPv4 DHCP 客户端从上游取地址，WAN 侧 DHCP 服务器关闭。用 `uci get network.wan.device` 查看当前 WAN 对应的接口。
 
+WAN 未接线时，LAN DHCP 和 LuCI 仍可使用。全新写入的镜像使用 `root` 登录，首次登录密码留空，随后设置自己的密码。恢复旧备份后使用恢复的账号配置。
+
 从 U 盘启动时，系统和配置会留在 U 盘。需要保留原内置盘时，关机后拔掉试用 U 盘即可回到原启动盘。
 
 ## 安装到内置 SSD
