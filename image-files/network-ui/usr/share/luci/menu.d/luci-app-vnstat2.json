@@ -1,0 +1,63 @@
+{
+	"admin/status/vnstat2": {
+		"action": {
+			"type": "alias",
+			"path": "admin/network/vnstat2"
+		},
+		"depends": {
+			"acl": [
+				"luci-app-vnstat2"
+			],
+			"fs": {
+				"/usr/bin/vnstat": "executable",
+				"/usr/bin/vnstati": "executable"
+			}
+		}
+	},
+	"admin/status/vnstat2/graphs": {
+		"action": {
+			"type": "alias",
+			"path": "admin/network/vnstat2/graphs"
+		},
+		"depends": {}
+	},
+	"admin/status/vnstat2/config": {
+		"action": {
+			"type": "alias",
+			"path": "admin/network/vnstat2/config"
+		},
+		"depends": {}
+	},
+	"admin/network/vnstat2": {
+		"title": "Traffic Statistics",
+		"order": 65,
+		"action": {
+			"type": "firstchild"
+		},
+		"depends": {
+			"acl": [
+				"luci-app-vnstat2"
+			],
+			"fs": {
+				"/usr/bin/vnstat": "executable",
+				"/usr/bin/vnstati": "executable"
+			}
+		}
+	},
+	"admin/network/vnstat2/graphs": {
+		"title": "Graphs",
+		"order": 1,
+		"action": {
+			"type": "view",
+			"path": "vnstat2/graphs"
+		}
+	},
+	"admin/network/vnstat2/config": {
+		"title": "Configuration",
+		"order": 2,
+		"action": {
+			"type": "view",
+			"path": "vnstat2/config"
+		}
+	}
+}

@@ -1,0 +1,91 @@
+diff --git a/applications/luci-app-filemanager/htdocs/luci-static/resources/view/system/filemanager.js b/applications/luci-app-filemanager/htdocs/luci-static/resources/view/system/filemanager.js
+index d49a7598..f226c0a0 100644
+--- a/applications/luci-app-filemanager/htdocs/luci-static/resources/view/system/filemanager.js
++++ b/applications/luci-app-filemanager/htdocs/luci-static/resources/view/system/filemanager.js
+@@ -286,14 +286,28 @@ const cssContent = `
+ 	margin-right: 10px;
+ }
+ #file-list-container {
+-	margin-top: 30px !important;
++	margin-top: 1rem;
+ 	overflow: auto;
+-	border: 1px solid #ccc;
++	border: 1px solid var(--border-color, #d9dee5);
++	border-radius: 0.5rem;
+ 	padding: 0;
+-	min-width: 600px;
++	min-width: min(100%, 68rem);
++	max-width: 100%;
++	box-sizing: border-box;
+ 	position: relative;
+ 	resize: both;
+ }
++#file-table {
++	min-width: 46rem;
++}
++#file-table th[data-field="permissions"],
++#file-table td:nth-child(2) {
++	min-width: 7rem !important;
++}
++#file-table th[data-field="mtime"],
++#file-table td:nth-child(5) {
++	min-width: 12rem !important;
++}
+ #file-list-container.drag-over {
+ 	border: 2px dashed #00BFFF;
+ 	background-color: rgba(0, 191, 255, 0.1);
+@@ -548,20 +562,29 @@ tr:hover {
+ }
+ .file-manager-header {
+ 	display: flex;
++	flex-wrap: wrap;
++	gap: 0.5rem;
+ 	align-items: center;
++	margin-bottom: 0.75rem;
+ }
+ .file-manager-header h2 {
++	flex-basis: 100%;
+ 	margin: 0;
+ }
+ .file-manager-header input {
+-	margin-left: 10px;
+-	width: 100%;
+-	max-width: 700px;
+-	font-size: 18px;
++	flex: 1 1 12rem;
++	min-width: 0;
+ }
+ .file-manager-header button {
+-	margin-left: 10px;
+-	font-size: 18px;
++	flex-shrink: 0;
++}
++#file-manager-container #tab-group .cbi-tabmenu {
++	display: flex;
++	flex-wrap: wrap;
++	gap: 0.25rem;
++}
++#file-manager-container #tab-group .cbi-tabmenu li {
++	margin: 0;
+ }
+ .directory-link {
+ 	/* Choose a color with good contrast or let the theme decide */
+@@ -604,7 +627,6 @@ return view.extend({
+ 					'type': 'text',
+ 					'id': 'path-input',
+ 					'value': currentPath,
+-					'style': 'margin-left: 10px;',
+ 					'keydown'(event) {
+ 						if (event.key === 'Enter') {
+ 							self.handleGoButtonClick(); // Trigger directory navigation on Enter
+@@ -613,8 +635,8 @@ return view.extend({
+ 				}),
+ 				E('button', {
+ 					'id': 'go-button',
+-					'click': this.handleGoButtonClick.bind(this),
+-					'style': 'margin-left: 10px;'
++					'class': 'btn cbi-button cbi-button-action',
++					'click': this.handleGoButtonClick.bind(this)
+ 				}, _('Go'))
+ 			]),
+ 

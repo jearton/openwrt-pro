@@ -1,0 +1,6 @@
+#!/bin/sh
+set -e
+
+uci set ttyd.@ttyd[0].interface='@loopback'
+uci set ttyd.@ttyd[0].check_origin='1'
+uci commit ttyd

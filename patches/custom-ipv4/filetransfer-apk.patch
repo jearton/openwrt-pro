@@ -1,0 +1,68 @@
+--- a/luci-app-filetransfer/luasrc/model/cbi/filetransfer.lua
++++ b/luci-app-filetransfer/luasrc/model/cbi/filetransfer.lua
+@@ -1,5 +1,7 @@
+ local fs = require "nixio.fs"
+ local http = luci.http
++local util = require "luci.util"
++local xml = require "luci.xml"
+ 
+ ful = SimpleForm("upload", translate("Upload"), nil)
+ ful.reset = false
+@@ -30,7 +32,7 @@
+ 	sPath = http.formvalue("dlfile")
+ 	sFile = fs.basename(sPath)
+ 	if fs.stat(sPath, "type") == "dir" then
+-		fd = io.popen('tar -C "%s" -cz .' % {sPath}, "r")
++		fd = io.popen("tar -C " .. util.shellquote(sPath) .. " -cz .", "r")
+ 		sFile = sFile .. ".tar.gz"
+ 	else
+ 		fd = nixio.open(sPath, "r")
+@@ -62,7 +64,11 @@
+ 		if not fd then
+ 			if not meta then return end
+ 
+-			if	meta and chunk then fd = nixio.open(dir .. meta.file, "w") end
++			if chunk and meta.file and meta.file == fs.basename(meta.file) and meta.file ~= "." and meta.file ~= ".." then
++				if fs.lstat(dir .. meta.file, "type") ~= "lnk" then
++					fd = nixio.open(dir .. meta.file, "w")
++				end
++			end
+ 
+ 			if not fd then
+ 				um.value = translate("Create upload file error.")
+@@ -127,17 +133,17 @@
+ 	return v
+ end
+ 
+-function IsIpkFile(name)
++local function is_apk_file(name)
+ 	name = name or ""
+ 	local ext = string.lower(string.sub(name, -4, -1))
+-	return ext == ".ipk"
++	return ext == ".apk"
+ end
+ 
+ btnis = tb:option(Button, "install", translate("Install"))
+ btnis.template = "filetransfer/other_button"
+ btnis.render = function(self, section, scope)
+ 	if not inits[section] then return false end
+-	if IsIpkFile(inits[section].name) then
++	if is_apk_file(inits[section].name) then
+ 		scope.display = ""
+ 	else
+ 		scope.display = "none"
+@@ -147,8 +153,12 @@
+ end
+ 
+ btnis.write = function(self, section)
+-	local r = luci.sys.exec(string.format('opkg --force-depends install "/tmp/upload/%s"', inits[section].name))
+-	form.description = string.format('<span style="color: red">%s</span>', r)
++	local row = inits[section]
++	if not row or not is_apk_file(row.name) then return end
++	local pkg = dir .. fs.basename(row.name)
++	if fs.lstat(pkg, "type") ~= "reg" then return end
++	local result = luci.sys.exec("apk add " .. util.shellquote(pkg) .. " 2>&1")
++	form.description = string.format("<pre>%s</pre>", xml.pcdata(result))
+ end
+ 
+ return ful, fdl, form

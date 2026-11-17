@@ -1,0 +1,11 @@
+.env
+**/secrets/
+**/state/
+/work/
+/artifacts/
+*.apk
+*.img
+*.img.gz
+*.key
+*.pem
+__pycache__/

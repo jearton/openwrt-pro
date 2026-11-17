@@ -1,0 +1,20 @@
+# 合并至现有配置。保留自身 users、filtering 及其他设置。
+http:
+  address: 127.0.0.1:3000
+dns:
+  bind_hosts:
+    - 127.0.0.1
+    - 192.168.77.1
+  port: 53
+  allowed_clients:
+    - 127.0.0.1
+    - 192.168.77.0/24
+  upstream_dns:
+    - '[/lab.test/]127.0.0.1:1053'
+    - '127.0.0.1:5353'
+  fallback_dns: []
+  use_private_ptr_resolvers: true
+  local_ptr_upstreams:
+    - '127.0.0.1:5353'
+dhcp:
+  enabled: false

@@ -1,0 +1,232 @@
+diff --git a/web/src/home/HomeApplications.vue b/web/src/home/HomeApplications.vue
+index 9690927..f3e00d2 100644
+--- a/web/src/home/HomeApplications.vue
++++ b/web/src/home/HomeApplications.vue
+@@ -21,7 +21,7 @@
+       <div class="applications-browser-body" :inert="saving()">
+         <LauncherLinkForm v-if="linkFormOpen" :initial="linkInitial" :entries="catalogue" @cancel="cancelLink" @saved="linkSaved"/>
+         <template v-else>
+-        <template v-if="editing"><LauncherFavoriteGrid :ids="draft" :columns="editorColumns" :limit="24" @remove="toggleFavorite" @reorder="commit"/><div class="launcher-editor-toolbar"><button @click="undoFavorite" :disabled="!history.length" data-shortcut-undo>↶ {{t('撤销','Undo')}}</button><button @click="commit(applicationDefaults)" data-shortcut-restore>{{t('恢复默认八项','Restore eight defaults')}}</button></div><h3 class="launcher-library-heading">{{t('添加快捷入口','Add shortcuts')}}</h3></template>
++        <template v-if="editing"><LauncherFavoriteGrid :ids="draft" :columns="editorColumns" :limit="24" @remove="toggleFavorite" @reorder="commit"/><div class="launcher-editor-toolbar"><button @click="undoFavorite" :disabled="!history.length" data-shortcut-undo>↶ {{t('撤销','Undo')}}</button><button @click="commit(applicationDefaults)" data-shortcut-restore>{{t('恢复默认快捷入口','Restore default shortcuts')}}</button></div><h3 class="launcher-library-heading">{{t('添加快捷入口','Add shortcuts')}}</h3></template>
+         <label class="application-search"><StudioGlyph name="grid"/><input v-model="search" :placeholder="t('搜索应用或系统工具','Search apps or system tools')" :aria-label="t('搜索应用或系统工具','Search apps or system tools')"/></label>
+         <div class="launchpad-controls"><div class="browser-category-tabs" role="group" :aria-label="t('入口分类','Shortcut categories')"><button v-for="tab in categories" :key="tab.id" :aria-pressed="browserTab===tab.id" :data-category="tab.id" @click="browserTab=tab.id">{{t(tab.zh,tab.en)}}</button></div><div v-if="!editing" class="launchpad-library-actions"><button @click="openLink()" :disabled="!provider.editable()" data-add-link>＋ {{t('添加链接','Add link')}}</button><button v-if="linkCount" :aria-pressed="managingLinks" @click="managingLinks=!managingLinks" data-manage-links>{{managingLinks?t('完成','Done'):t('管理链接','Manage links')}}</button></div></div>
+           <div v-if="catalogueState!=='ready'" class="applications-state launchpad-status" role="status" data-applications-state><span>{{stateText}}</span><button v-if="['error','permission','timeout'].includes(catalogueState)" @click="provider.retry">{{t('重试','Retry')}}</button></div>
+diff --git a/web/src/home/HomeLayout.vue b/web/src/home/HomeLayout.vue
+index e8824d0..5476444 100644
+--- a/web/src/home/HomeLayout.vue
++++ b/web/src/home/HomeLayout.vue
+@@ -156,7 +156,7 @@ import {cardInstallerKey} from './cards/installContext'
+ import {installableCards} from './cards/catalog'
+ import {useCardRegistry} from './cards/useCardRegistry'
+ import {widgetDefinitions,widget,type WidgetId} from './layout/rowLayout'
+-import {templates,clone,naturalRows,compactIds,recommended,makeRow,visibleIds,layoutIssue,rowMinimum,changeTemplate,renderRows,type Template,type OrderedRow,type ActualRow,type ActualColumn} from './layout/orderedLayout'
++import {templates,clone,naturalRows,compactIds,recommended,homepageRows,isHomepageWidget,makeRow,visibleIds,layoutIssue,rowMinimum,changeTemplate,renderRows,type Template,type OrderedRow,type ActualRow,type ActualColumn} from './layout/orderedLayout'
+ import type {LayoutConfig} from './configContract'
+ const props=defineProps<{config:LayoutConfig;data:Record<string,any>;errors:Record<string,string>;theme:string;favoriteIds:string[];canEdit:boolean;externalBusy?:boolean;bootstrapping?:boolean;persist:(value:LayoutConfig)=>Promise<void>}>()
+ const emit=defineEmits<{(e:'navigate',path:string):void;(e:'device',id:string):void;(e:'editing',value:boolean):void;(e:'visible',ids:WidgetId[]):void}>()
+@@ -170,13 +170,13 @@ async function inspectInstall(){if(!installer||!installTarget.value)return;const
+ function chooseLibrary(id:WidgetId){if(needsHostUpdate(id))return;if(unavailableCard(id)){installTarget.value=id;void inspectInstall();return}choice.value=id;choiceSummary.value=false}
+ async function confirmInstall(){if(!installer||!installTarget.value||installing.value||!['uninstalled','update_required','failed','installing'].includes(installState.value))return;const id=installTarget.value,generation=installGeneration;installing.value=true;installError.value='';installObserver?.abort();installObserver=new AbortController();try{await installer.install(id,installObserver.signal);await registry.discover(true);if(generation!==installGeneration)return;if(unavailableCard(id))throw Error(t('插件安装后仍未注册卡片，请升级或修复插件。','Plugin did not register a card; update or repair it.'));preparedChoice(id)}catch(e){if(generation===installGeneration){installState.value='unknown';installError.value=e instanceof Error?e.message:String(e)}}finally{if(generation===installGeneration)installing.value=false}}
+ 
+-const libraryDefinitions=computed(()=>[...widgetDefinitions,...Array.from(new Set([...installableCards.map(c=>c.id),...registry.cards.value.map(c=>c.id),...Object.keys(props.config.widgetPreferences).filter(id=>id.startsWith('plugin.'))])).map(id=>widget(id as WidgetId))])
++const libraryDefinitions=computed(()=>[...widgetDefinitions.filter(w=>isHomepageWidget(w.id)),...Array.from(new Set([...installableCards.map(c=>c.id),...registry.cards.value.map(c=>c.id),...Object.keys(props.config.widgetPreferences).filter(id=>id.startsWith('plugin.'))])).map(id=>widget(id as WidgetId))])
+ const unavailableCard=(id:WidgetId)=>id.startsWith('plugin.')&&!registry.cards.value.some(c=>c.id===id)
+-const orderedSession=computed(()=>props.config.rows),preferenceSession=computed(()=>props.config.widgetPreferences),theme=computed(()=>props.theme),data=props.data,errors=props.errors,saving=ref(false)
++const orderedSession=computed(()=>homepageRows(props.config.rows)),preferenceSession=computed(()=>props.config.widgetPreferences),theme=computed(()=>props.theme),data=props.data,errors=props.errors,saving=ref(false)
+ const homeApplicationSession={get favorites(){return props.favoriteIds}}
+ const {noticeState,notice,showNotice,dismissNotice}=useLayoutNotice()
+ const editing=ref(false),draft=ref(clone(orderedSession.value)),preferences=ref(clone(preferenceSession.value)),revision=ref(0),history=ref<HomeDocument[]>([]),selected=ref(draft.value[0]?.id||''),previewWidth=ref(0)
+-const layout=computed(()=>editing.value?draft.value:orderedSession.value),visible=computed(()=>visibleIds(layout.value)),hidden=computed(()=>widgetDefinitions.filter(w=>!visible.value.includes(w.id)))
++const layout=computed(()=>editing.value?draft.value:orderedSession.value),visible=computed(()=>visibleIds(layout.value)),hidden=computed(()=>widgetDefinitions.filter(w=>isHomepageWidget(w.id)&&!visible.value.includes(w.id)))
+ watch(visible,ids=>emit('visible',ids),{immediate:true})
+ const selectedIndex=computed(()=>draft.value.findIndex(r=>r.id===selected.value)),selectedRow=computed(()=>draft.value[selectedIndex.value])
+ const widthPresets=computed(()=>{const values=selectedRow.value?.columns.length===3?[[34,33,33],[50,25,25],[25,50,25]]:[[50,50],[60,40],[65,35],[40,60]],current=selectedRow.value?.columns.map(c=>c.weight)||[];return values.some(v=>v.join('/')===current.join('/'))?values:[current,...values]})
+@@ -256,7 +256,7 @@ function commitResult(result:LayoutResult){return requestResult(result)}
+ function toggleRetained(id:WidgetId){retainedIds.value=retainedIds.value.includes(id)?retainedIds.value.filter(v=>v!==id):[...retainedIds.value,id]}
+ const structurePlan=computed(()=>{const plans=choosePlan(structureResult.value);return plans.direct.status==='blocked'?plans.alternative||plans.direct:plans.direct})
+ function confirmStructure(){const plan=structurePlan.value;if(!plan||plan.status==='blocked')return;const applied=applyPlan(homeDraft(),plan,layoutContext());if(applied.issue){warn(applied.issue);return}adoptDocument(applied.document);requestedTemplate.value=null}
+-function restoreRecommended(){const plan=planDocument(homeDraft(),{rows:recommended(),issue:'',hidden:[],changed:false},layoutContext(),defaultPreferences());if(plan.status!=='blocked')adoptDocument(plan.next)}
++function restoreRecommended(){const plan=planDocument(homeDraft(),{rows:homepageRows(recommended()),issue:'',hidden:[],changed:false},layoutContext(),defaultPreferences());if(plan.status!=='blocked')adoptDocument(plan.next)}
+ function actualFormLabel(id:WidgetId){const row=actualRows.value.find(r=>r.columns.some(c=>c.cards.includes(id))),column=row?.columns.find(c=>c.cards.includes(id));if(!row||!column)return '';const width=columnWidths({id:row.id,template:'single',height:row.height,columns:row.columns},contentWidth.value,renderPreferences.value)[row.columns.indexOf(column)],resolved=resolvePresentation(id,renderPreferences.value[id],{width,height:100000,role:column.compact?'stacked':'ordinary',favoriteCount:4,natural:true});return formLabel(resolved.id)}
+ function chooseModule(id:WidgetId){const target=pendingSlot.value;closeLibrary();startMoving({kind:'module',id});if(target)void place(target)}
+ async function locate(id:WidgetId){closeLibrary();selectedCard.value=id;selected.value=draft.value.find(r=>visibleIds([r]).includes(id))?.id||'';await nextTick();const element=contentElement.value?.querySelector<HTMLElement>(`[data-drag-card="${id}"]`);element?.scrollIntoView({block:'center',behavior:'auto'});element?.focus({preventScroll:true})}
+@@ -371,7 +371,7 @@ function environmentChanged(){interruptMove();if(['display','adapt','slot'].incl
+ watch(()=>props.config,()=>{if(editing.value)notice.value=t('已读取当前保存版本，编辑草稿仍保留。','Saved version reloaded. Your editing draft is retained.')})
+ watch(revision,()=>{cancelMoveGesture?.();rowSorting.cancel()})
+ let observer:ResizeObserver|undefined
+-const dirty=computed(()=>editing.value&&fingerprint(homeDraft())!==fingerprint(documentOf(props.config.rows,props.config.widgetPreferences)))
++const dirty=computed(()=>editing.value&&fingerprint(homeDraft())!==fingerprint(documentOf(orderedSession.value,props.config.widgetPreferences)))
+ function beforeUnload(event:BeforeUnloadEvent){if(dirty.value||saving.value){event.preventDefault();event.returnValue=''}}
+ onBeforeRouteLeave(()=>!dirty.value&&!saving.value||window.confirm(t('尚有未保存的首页修改，确定离开？','Leave without saving homepage changes?')))
+ onMounted(()=>{window.addEventListener('beforeunload',beforeUnload);window.addEventListener('keydown',escapeMove,true);window.addEventListener('resize',environmentChanged);observer=new ResizeObserver(entries=>{for(const e of entries){if(e.target===availableElement.value)availableWidth.value=e.contentRect.width;if(e.target===contentElement.value)contentWidth.value=e.contentRect.width}naturalSizing.schedule()});if(availableElement.value)observer.observe(availableElement.value);if(contentElement.value)observer.observe(contentElement.value)})
+diff --git a/web/src/home/LauncherToolAction.vue b/web/src/home/LauncherToolAction.vue
+index dc90759..6e00176 100644
+--- a/web/src/home/LauncherToolAction.vue
++++ b/web/src/home/LauncherToolAction.vue
+@@ -3,35 +3,27 @@
+   <div class="launcher-tool-action" :data-launcher-action="app.tool">
+    <template v-if="unavailable"><p role="status">{{unavailable}}</p></template>
+    <component v-else-if="form" :is="form" :Close="close"/>
+-   <template v-else><a :href="destination" :target="app.tool==='terminal'?'_blank':undefined" rel="noopener noreferrer" data-tool-destination>{{t('打开','Open')}} {{title}}</a></template>
+-   <div v-if="app.tool==='firmware'&&!unavailable" class="launcher-firmware-options"><label><input type="checkbox" :checked="autoCheck" :disabled="busy" @change="setAuto(($event.target as HTMLInputElement).checked)"/>{{t('自动检查更新','Automatically check for updates')}}</label><span v-if="system.checkUpdate?.needUpdate">{{t('有可用更新','Update available')}}</span><span role="status">{{message}}</span></div>
++   <template v-else><a :href="app.path" data-tool-destination>{{t('打开','Open')}} {{title}}</a></template>
+   </div>
+  </NetworkWidgetDialog>
+ </template>
+ <script setup lang="ts">
+-import {computed,markRaw,onMounted,onUnmounted,ref} from 'vue'
+-import request from '../request'
+-import {useNetworkStore,useSystemStore} from '../plugins/store'
++import {computed,markRaw} from 'vue'
++import {useNetworkStore} from '../plugins/store'
+ import Lan from '../components/action-netip/index.vue'
+ import Dns from '../components/action-dns/index.vue'
+ import Source from '../components/action-softwaresource/index.vue'
+-import Sandbox from '../components/action-sandbox/index.vue'
+-import SandboxEnvironment from '../components/action-sandboxenvironment/index.vue'
+ import NetworkWidgetDialog from './NetworkWidgetDialog.vue'
+ import {useLauncherCatalog} from './launcherContext'
+-const {entryAvailability,state:launcherCatalogState}=useLauncherCatalog()
++const {entryAvailability}=useLauncherCatalog()
+ import type {HomeApplication} from './homeApplications'
+ const props=defineProps<{app:HomeApplication}>(),emit=defineEmits<{(e:'close'):void}>()
+-const english=window.vue_lang==='en',t=(zh:string,en:string)=>english?en:zh,system=useSystemStore(),network=useNetworkStore()
++const english=window.vue_lang==='en',t=(zh:string,en:string)=>english?en:zh,network=useNetworkStore()
+ const title=computed(()=>t(props.app.zh,props.app.en)),close=()=>emit('close')
+ const unavailable=computed(()=>entryAvailability(props.app)!=='available'?entryAvailability(props.app)==='unsupported'?t('当前固件不支持此功能。','This firmware does not support this tool.'):t('功能状态暂不可用，请稍后重试。','Tool status is unavailable. Try again later.'):props.app.tool==='dns'&&!network.status?.proto?t('网络信息尚未就绪，请稍后重试。','Network details are not ready. Try again later.'):'')
+-const forms:Record<string,any>={lan:markRaw(Lan),dns:markRaw(Dns),source:markRaw(Source),sandbox:markRaw(Sandbox)}
+-const form=computed(()=>props.app.tool==='sandbox'&&launcherCatalogState.sandbox==='running'?markRaw(SandboxEnvironment):forms[props.app.tool||''])
+-const destination=computed(()=>props.app.tool==='terminal'?`${window.quickstart_configs?.ttyd?.ssl?'https':'http'}://${window.location.hostname}:${window.quickstart_configs?.ttyd?.port||7681}/`:props.app.path)
+-const autoCheck=ref(!window.quickstart_configs?.update?.disable),busy=ref(false),message=ref('');let alive=true
+-async function setAuto(enable:boolean){if(busy.value)return;busy.value=true;message.value='';try{const response=await request.System.AutoCheckUpdate.POST({enable});if(response.data.success!==0||response.data.error)throw new Error(response.data.error);autoCheck.value=enable;if(alive){window.quickstart_configs.update={...window.quickstart_configs.update,disable:!enable};message.value=t('设置已保存','Setting saved');if(enable)system.requestCheckUpdate()}}catch{message.value=t('保存失败，请重试','Could not save. Try again.')}finally{busy.value=false}}
+-onUnmounted(()=>{alive=false})
++const forms:Record<string,any>={lan:markRaw(Lan),dns:markRaw(Dns),source:markRaw(Source)}
++const form=computed(()=>forms[props.app.tool||''])
+ </script>
+ <style scoped>
+-.launcher-tool-action{font:14px/1.7 Arial,"Microsoft YaHei",sans-serif}.launcher-action-notice{color:var(--c-muted);font-size:12px;margin:0 0 14px}.launcher-tool-action code{display:block;overflow-wrap:anywhere;padding:12px;background:var(--c-soft);border-radius:8px}.launcher-firmware-options{display:grid;gap:12px;margin-top:18px}.launcher-firmware-options label{display:flex;align-items:center;gap:10px}.launcher-tool-action :deep(#actioner){position:static!important;display:block;width:100%;height:auto;overflow:visible}.launcher-tool-action :deep(.bg){display:none}.launcher-tool-action :deep(.actioner-dns),.launcher-tool-action :deep(.actioner-tips){width:100%;background:transparent;color:var(--c-text);overflow:visible}.launcher-tool-action :deep(.actioner-dns_header){display:none}.launcher-tool-action :deep(.actioner-dns_body){padding:0;min-height:0}.launcher-tool-action :deep(.actioner-dns_footer){padding:14px 0 0;font-size:14px}.launcher-tool-action :deep(input),.launcher-tool-action :deep(select){max-width:100%;box-sizing:border-box}.launcher-tool-action :deep(.config-message){font-size:15px;min-height:80px}
++.launcher-tool-action{font:14px/1.7 Arial,"Microsoft YaHei",sans-serif}.launcher-action-notice{color:var(--c-muted);font-size:12px;margin:0 0 14px}.launcher-tool-action code{display:block;overflow-wrap:anywhere;padding:12px;background:var(--c-soft);border-radius:8px}.launcher-tool-action :deep(#actioner){position:static!important;display:block;width:100%;height:auto;overflow:visible}.launcher-tool-action :deep(.bg){display:none}.launcher-tool-action :deep(.actioner-dns),.launcher-tool-action :deep(.actioner-tips){width:100%;background:transparent;color:var(--c-text);overflow:visible}.launcher-tool-action :deep(.actioner-dns_header){display:none}.launcher-tool-action :deep(.actioner-dns_body){padding:0;min-height:0}.launcher-tool-action :deep(.actioner-dns_footer){padding:14px 0 0;font-size:14px}.launcher-tool-action :deep(input),.launcher-tool-action :deep(select){max-width:100%;box-sizing:border-box}.launcher-tool-action :deep(.config-message){font-size:15px;min-height:80px}
+ </style>
+diff --git a/web/src/home/homeApplications.ts b/web/src/home/homeApplications.ts
+index e3c8ed6..3ae11bf 100644
+--- a/web/src/home/homeApplications.ts
++++ b/web/src/home/homeApplications.ts
+@@ -1,4 +1,4 @@
+-export type HomeApplication={id:string;zh:string;en:string;detail:string;detailEn:string;glyph:string;path:string;kind:'app'|'builtin'|'tool'|'link';tone:string;entryScript?:boolean;tool?:'lan'|'terminal'|'firmware'|'dns'|'source'|'sandbox'|'logs'|'maintenance'}
++export type HomeApplication={id:string;zh:string;en:string;detail:string;detailEn:string;glyph:string;path:string;kind:'app'|'builtin'|'tool'|'link';tone:string;entryScript?:boolean;tool?:'lan'|'terminal'|'firmware'|'dns'|'source'|'logs'|'maintenance'}
+ export const homeApplications:HomeApplication[]=[
+   {id:'files',zh:'文件管理',en:'Files',detail:'磁盘与文件',detailEn:'Disks & files',glyph:'folder',path:'/cgi-bin/luci/admin/services/linkease/file/',kind:'builtin',tone:'blue'},
+   {id:'docker',zh:'Docker',en:'Docker',detail:'容器管理',detailEn:'Containers',glyph:'layers',path:'',kind:'app',tone:'blue'},
+@@ -12,13 +12,13 @@ export const homeApplications:HomeApplication[]=[
+ ]
+ export const systemTools:HomeApplication[]=[
+  {id:'tool-lan',zh:'内网配置',en:'LAN settings',detail:'地址与DHCP',detailEn:'Address & DHCP',glyph:'network',path:'',kind:'tool',tone:'blue',tool:'lan'},
+- {id:'tool-terminal',zh:'终端',en:'Terminal',detail:'命令行',detailEn:'Command line',glyph:'terminal',path:'',kind:'tool',tone:'teal',tool:'terminal'},
+- {id:'tool-firmware',zh:'固件更新',en:'Firmware update',detail:'升级与自动检查',detailEn:'Update & auto-check',glyph:'download',path:'/cgi-bin/luci/admin/system/ota',kind:'tool',tone:'violet',tool:'firmware'},
++ {id:'tool-terminal',zh:'终端设置',en:'Terminal settings',detail:'管理终端服务',detailEn:'Manage terminal service',glyph:'terminal',path:'/cgi-bin/luci/admin/system/ttyd/config',kind:'tool',tone:'teal',tool:'terminal'},
++ {id:'tool-firmware',zh:'固件更新',en:'Firmware update',detail:'备份与升级',detailEn:'Backup and upgrade',glyph:'download',path:'/cgi-bin/luci/admin/system/flash',kind:'tool',tone:'violet',tool:'firmware'},
+  {id:'tool-dns',zh:'DNS配置',en:'DNS settings',detail:'网络解析',detailEn:'Name resolution',glyph:'globe',path:'',kind:'tool',tone:'teal',tool:'dns'},
+  {id:'tool-source',zh:'软件源配置',en:'Software sources',detail:'软件包镜像',detailEn:'Package mirrors',glyph:'layers',path:'',kind:'tool',tone:'violet',tool:'source'},
+- {id:'tool-sandbox',zh:'开启沙箱',en:'Enable sandbox',detail:'隔离实验环境',detailEn:'Experiment environment',glyph:'shield',path:'',kind:'tool',tone:'blue',tool:'sandbox'},
+  {id:'tool-logs',zh:'日志查看',en:'System logs',detail:'系统日志',detailEn:'System events',glyph:'folder',path:'/cgi-bin/luci/admin/status/logs',kind:'tool',tone:'teal',tool:'logs'},
+  {id:'tool-maintenance',zh:'系统维护',en:'Maintenance',detail:'系统维护工具',detailEn:'System maintenance',glyph:'tune',path:'/cgi-bin/luci/admin/store/pages/maintance',kind:'tool',tone:'blue',tool:'maintenance'},
+ ]
++export const isHomepageFavorite=(id:string)=>id!=='tool-sandbox'
+ export const FAVORITE_LIMIT=24
+ export const applicationDefaults=systemTools.map(a=>a.id)
+diff --git a/web/src/home/launcherContext.ts b/web/src/home/launcherContext.ts
+index 3073ce6..dd9f0d4 100644
+--- a/web/src/home/launcherContext.ts
++++ b/web/src/home/launcherContext.ts
+@@ -1,15 +1,14 @@
+ import {computed,inject,onMounted,onUnmounted,provide,reactive,type InjectionKey} from 'vue'
+-import {homeApplications,systemTools,type HomeApplication} from './homeApplications'
++import {homeApplications,systemTools,isHomepageFavorite,type HomeApplication} from './homeApplications'
+ import {mergeLibrary,type LinkDraft} from './launcherLibrary'
+ import {readInstalledApplications} from './installedAppsClient'
+ import {configValue,type LauncherConfig} from './configContract'
+ import type {useHomeConfig} from './useHomeConfig'
+-import {useSystemStore} from '../plugins/store'
+ 
+ type Availability='available'|'unknown'|'uninstalled'|'unsupported'|'permission'|'no-entry'
+ function createLauncher(config:ReturnType<typeof useHomeConfig>){
+- const state=reactive({status:'loading',apps:[] as HomeApplication[],sandbox:'unknown'}),retained=new Map<string,HomeApplication>()
+- const homeApplicationSession={get favorites(){return config.launcher.value.favorites}}
++ const state=reactive({status:'loading',apps:[] as HomeApplication[]}),retained=new Map<string,HomeApplication>()
++ const homeApplicationSession={get favorites(){return config.launcher.value.favorites.filter(isHomepageFavorite)}}
+  const linkSession={get entries():HomeApplication[]{return config.launcher.value.links.map(l=>({id:l.id,zh:l.name,en:l.name,path:l.url,glyph:l.glyph,detail:'用户添加的链接',detailEn:'Custom link',kind:'link',tone:'teal'}))}}
+  let controller:AbortController|undefined,alive=true,pendingRead:Promise<void>|undefined
+  function refresh(){return pendingRead=read()}
+@@ -22,20 +21,16 @@ function createLauncher(config:ReturnType<typeof useHomeConfig>){
+    if(alive&&controller===current){for(const app of state.apps)if(homeApplicationSession.favorites.includes(app.id))retained.set(app.id,app);for(const id of retained.keys())if(!homeApplicationSession.favorites.includes(id))retained.delete(id);state.apps=apps;state.status='ready'}
+   }catch(error){if(alive&&controller===current)state.status=timedOut?'timeout':error instanceof Error&&error.message==='permission'?'permission':'error'}finally{window.clearTimeout(timer)}
+  }
+- async function readSandbox(){const current=new AbortController(),timer=window.setTimeout(()=>current.abort(),8000);try{const r=await fetch('/cgi-bin/luci/istore/nas/sandbox/',{signal:current.signal,credentials:'same-origin',cache:'no-store'});const e=await r.json();if(alive&&r.ok&&(e.success===undefined||e.success===0)&&!e.error)state.sandbox=e.result?.status||'unknown'}catch{}finally{window.clearTimeout(timer)}}
+  function resolveEntry(id:string):HomeApplication{return [...systemTools,...state.apps,...linkSession.entries,...retained.values(),...homeApplications].find(a=>a.id===id)||{id,zh:'不可用入口',en:'Unavailable shortcut',detail:id,detailEn:id,glyph:'grid',path:'',kind:'app',tone:'blue'}}
+  function entryAvailability(app:HomeApplication):Availability{
+   if(app.kind==='link')return linkSession.entries.some(a=>a.id===app.id)?'available':'unknown'
+   if(app.kind==='app')return state.status==='ready'?(state.apps.some(a=>a.id===app.id)?app.path||app.entryScript?'available':'no-entry':'uninstalled'):state.status==='permission'?'permission':'unknown'
+-  const feature=({terminal:'ttyd',firmware:'ota',sandbox:'sandbox'} as Record<string,string>)[app.tool||'']
+-  if(feature&&!window.quickstart_features?.includes(feature))return 'unsupported'
+-  if(app.tool==='sandbox')return state.sandbox==='unsupport'?'unsupported':state.sandbox==='unknown'?'unknown':'available'
+   return 'available'
+  }
+  const catalogue=computed(()=>mergeLibrary([...systemTools,...homeApplications.filter(a=>a.kind==='builtin'),...state.apps,...linkSession.entries],homeApplicationSession.favorites,resolveEntry))
+  async function saveFavorites(ids:string[]){await config.save('launcher',{...config.launcher.value,favorites:ids})}
+  async function saveLink(draft:LinkDraft){
+-  const current=config.launcher.value
++  const current={...config.launcher.value,favorites:homeApplicationSession.favorites}
+   if(draft.id&&!current.links.some(l=>l.id===draft.id))return {error:'missing'}
+   if(!draft.id&&current.links.length>=64)return {error:'limit'}
+   if(draft.pin&&!current.favorites.includes(draft.id||'')&&current.favorites.length>=24)return {error:'pins'}
+@@ -45,9 +40,8 @@ function createLauncher(config:ReturnType<typeof useHomeConfig>){
+   await config.save('launcher',value);return {entry:resolveEntry(id)}
+  }
+  async function deleteLink(id:string){const current=config.launcher.value;await config.save('launcher',{...current,links:current.links.filter(l=>l.id!==id),favorites:current.favorites.filter(pin=>pin!==id)})}
+- const system=useSystemStore();let updateTimer:number|undefined
+- onMounted(()=>{void refresh();void readSandbox();if(!window.quickstart_configs?.update?.disable&&window.quickstart_features?.includes('ota'))updateTimer=window.setTimeout(()=>{if(!document.hidden)system.requestCheckUpdate()},1100)})
+- onUnmounted(()=>{alive=false;controller?.abort();window.clearTimeout(updateTimer)})
++ onMounted(()=>{void refresh()})
++ onUnmounted(()=>{alive=false;controller?.abort()})
+  return {state,catalogue,resolve:resolveEntry,resolveEntry,entryAvailability,homeApplicationSession,linkSession,saveLink,deleteLink,saveFavorites,retry:refresh,waitForRead:()=>pendingRead||Promise.resolve(),begin:()=>config.begin('launcher'),editable:()=>config.editable('launcher'),saving:()=>config.state.launcher.saving,preferencesLoading:()=>config.state.launcher.loading}
+ }
+ type Launcher=ReturnType<typeof createLauncher>
+diff --git a/web/src/home/layout/orderedLayout.ts b/web/src/home/layout/orderedLayout.ts
+index 1861e0c..5a6bd7d 100644
+--- a/web/src/home/layout/orderedLayout.ts
++++ b/web/src/home/layout/orderedLayout.ts
+@@ -30,6 +30,21 @@ export const recommended=():OrderedRow[]=>[
+   makeRow(['docker','downloads','remote'],'triple',280,'services'),
+   makeRow(['system'],'single',280,'system'),
+ ]
++export const isHomepageWidget=(id:WidgetId)=>id!=='sharing'&&id!=='downloads'
++
++export function homepageRows(rows:OrderedRow[]):OrderedRow[]{
++  return rows.flatMap(row=>{
++    const hasHiddenCard=row.columns.some(column=>column.cards.some(id=>id!==null&&!isHomepageWidget(id)))
++    if(!hasHiddenCard)return [row]
++
++    const columns=row.columns.map(column=>({
++      ...column,
++      cards:column.cards.map(id=>id!==null&&isHomepageWidget(id)?id:null),
++    }))
++    return columns.some(column=>column.cards.some(Boolean))?[{...row,columns}]:[]
++  })
++}
++
+ export const visibleIds=(rows:OrderedRow[])=>rows.flatMap(r=>r.columns.flatMap(c=>c.cards.filter((id):id is WidgetId=>Boolean(id))))
+ export function cardMinimum(id:WidgetId,stacked:boolean){return stacked&&(compactIds.includes(id)||id.startsWith('plugin.'))?capability(id).compactHeight:capability(id).minHeight}
+ export function rowMinimum(row:OrderedRow){return Math.max(0,...row.columns.map(c=>{
+diff --git a/web/src/home/naturalHome.css b/web/src/home/naturalHome.css
+index a88f21d..378a747 100644
+--- a/web/src/home/naturalHome.css
++++ b/web/src/home/naturalHome.css
+@@ -27,7 +27,7 @@
+ .natural-home .native-business-surface .system-overview{min-height:148px}
+ .natural-home .ordered-card>.compact-preview{min-height:148px}
+ .natural-home .widget-traffic[data-chart-stretch]{height:100%;min-height:320px}.natural-home .widget-traffic[data-chart-stretch] .network_container{height:100%!important;flex:1;min-height:320px}
+-.natural-home .compact-ports{padding:14px;min-height:136px!important}.natural-home .compact-ports .interface-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.natural-home .compact-ports .interface-list>button{display:grid;grid-template-columns:16px minmax(0,1fr) auto;border:1px solid var(--c-line);border-radius:6px;padding:8px;gap:4px 6px;align-items:center;align-content:start;overflow:hidden}.natural-home .compact-ports .interface-link-mark{grid-column:1;grid-row:1;width:16px;height:16px;border-radius:0;background:none}.natural-home .compact-ports .interface-name,.natural-home .compact-ports .interface-link-state{display:contents}.natural-home .compact-ports .interface-name strong{grid-column:2;grid-row:1;font-size:14px}.natural-home .compact-ports .interface-name small{grid-column:1/3;grid-row:2;margin:0;font-size:12px}.natural-home .compact-ports .interface-link-state strong{grid-column:3;grid-row:1}.natural-home .compact-ports .interface-link-state small{grid-column:3;grid-row:2;margin:0;overflow-wrap:anywhere}.natural-home .compact-ports .interface-list>button>svg{display:none}.natural-home .compact-ports footer{min-height:0;padding-top:8px}.natural-home .compact-ports footer>small{display:block;font-size:12px;max-width:100%}.natural-home .compact-ports .interface-link-state strong,.natural-home .compact-ports .interface-link-state small{font-size:12px}
++.natural-home .compact-ports{padding:14px;min-height:136px!important}.natural-home .compact-ports .interface-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.natural-home .compact-ports .interface-list>button{display:grid;grid-template-columns:16px minmax(0,1fr) auto;border:1px solid var(--c-line);border-radius:6px;box-sizing:border-box;height:auto;max-height:none;padding:8px;gap:4px 6px;align-items:center;align-content:start;overflow:hidden}.natural-home .compact-ports .interface-link-mark{grid-column:1;grid-row:1;width:16px;height:16px;border-radius:0;background:none}.natural-home .compact-ports .interface-name,.natural-home .compact-ports .interface-link-state{display:contents}.natural-home .compact-ports .interface-name strong{grid-column:2;grid-row:1;font-size:14px}.natural-home .compact-ports .interface-name small{grid-column:1/3;grid-row:2;margin:0;font-size:12px;line-height:1.4;overflow-wrap:anywhere}.natural-home .compact-ports .interface-link-state strong{grid-column:3;grid-row:1}.natural-home .compact-ports .interface-link-state small{grid-column:3;grid-row:2;margin:0;line-height:1.4;overflow-wrap:anywhere}.natural-home .compact-ports .interface-list>button>svg{display:none}.natural-home .compact-ports footer{min-height:0;padding-top:8px}.natural-home .compact-ports footer>small{display:block;font-size:12px;max-width:100%}.natural-home .compact-ports .interface-link-state strong,.natural-home .compact-ports .interface-link-state small{font-size:12px}
+ @container(max-width:300px){.natural-home .compact-ports .interface-list{grid-template-columns:minmax(0,1fr)}}
+ .natural-home .native-remote .path{gap:8px;min-width:0}.natural-home .native-remote .path>.configure{flex:1;min-width:0;width:auto;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .natural-home .device-header-actions{display:flex;align-items:center;gap:8px;margin-left:auto}.natural-home .device-header-actions>.module-more{display:flex;align-items:center;gap:5px;padding:7px 9px;border:1px solid var(--c-line);border-radius:6px;background:none;color:var(--c-accent);font-size:12px;white-space:nowrap}.natural-home .canvas-module>header>div.device-header-actions{width:auto;flex:none}

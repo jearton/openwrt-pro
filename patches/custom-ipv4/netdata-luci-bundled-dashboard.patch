@@ -1,0 +1,24 @@
+diff --git a/package/custom/luci-app-netdata/Makefile b/package/custom/luci-app-netdata/Makefile
+--- a/package/custom/luci-app-netdata/Makefile
++++ b/package/custom/luci-app-netdata/Makefile
+@@ -6,6 +6,8 @@
+ 
+ LUCI_TITLE:=LuCI support for Netdata
+ LUCI_DEPENDS:=+netdata
++PKG_VERSION:=0
++PKG_RELEASE:=1
+ 
+ include $(TOPDIR)/feeds/luci/luci.mk
+ 
+diff --git a/package/custom/luci-app-netdata/htdocs/luci-static/resources/view/netdata.js b/package/custom/luci-app-netdata/htdocs/luci-static/resources/view/netdata.js
+--- a/package/custom/luci-app-netdata/htdocs/luci-static/resources/view/netdata.js
++++ b/package/custom/luci-app-netdata/htdocs/luci-static/resources/view/netdata.js
+@@ -10,7 +10,7 @@
+ 				_('Netdata Dashboard')
+ 			]),
+ 			E('iframe', {
+-				'src': 'http://' + window.location.hostname + ':19999',
++				'src': 'http://' + window.location.hostname + ':19999/v3/',
+ 				'style': 'width: 100%; min-height: 1200px; border: none; border-radius: 3px; resize: vertical;'
+ 			}, null)
+ 		]);

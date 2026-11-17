@@ -1,0 +1,32 @@
+{
+  "asset_version": "istoreos-b729a2aad4772273",
+  "absent_firstboot_scripts": {
+    "luci-app-argon-config": [
+      "etc/uci-defaults/luci-argon-config"
+    ]
+  },
+  "image": "istoreos-25.12.6-2026110611-x86-64-squashfs-combined-efi.img.gz",
+  "sha256": "90bf15fe530801540c521189184ea94137a1e1b634cca02b04f6c681f07a39df",
+  "source_commit": "111a9805445a88833c40d38b628fa0dfd02060c8",
+  "packages": {
+    "quickstart": "0.13.1-r1",
+    "luci-app-quickstart": "0.12.10-r1",
+    "luci-i18n-quickstart-zh-cn": "26.216.48241~ff3fc6d",
+    "luci-theme-argon": "2.2.12.4-r20260813",
+    "luci-app-argon-config": "0.9.2-r20250326",
+    "luci-i18n-argon-zh-cn": "26.225.13967~138463c",
+    "luci-i18n-argon-config-zh-cn": "26.218.10356~7efc088"
+  },
+  "theme_support_assets": {
+    "www/luci-static/resources/easepi/easeicon.css": "6cd17818950ec5cc972bda831e64c4d429bad79e0e53579492373396ed7000c5",
+    "www/luci-static/resources/easepi/iconfont.ttf": "1236513469eabd0ab5bfed87d16bb52dccc7a5b631bf421825813915c4ef2d3a",
+    "www/luci-static/resources/easepi/iconfont.woff": "6343e8eb0ccfdb02eb8716fd4e5f77f91cfe39e3527f27b7a80a9944363fce3b",
+    "www/luci-static/resources/easepi/iconfont.woff2": "589c94e15b9fa345206aa12c972c05020417aca940a6c1228f278fa96918765c"
+  },
+  "custom_changes": [
+    "Fingerprint Quickstart entry URLs from official static assets",
+    "Start with storage and download cards hidden in Quickstart defaults",
+    "Use the mounted overlay path in Argon Config without the opkg compatibility helper",
+    "Keep Bing wallpapers selected and include EasePi icons from the same verified image"
+  ]
+}

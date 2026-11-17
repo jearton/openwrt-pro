@@ -1,0 +1,66 @@
+{
+  "release": "25.12.6",
+  "target": "x86/64",
+  "checked_on": "2026-11-15",
+  "source": {
+    "url": "https://github.com/openwrt/openwrt.git",
+    "ref": "v25.12.6",
+    "commit": "64900e756efa667774214f9c6b17c113222e01f7",
+    "revision": "r33311-981c978eff",
+    "source_date_epoch": 1792273538
+  },
+  "feeds": [
+    {
+      "name": "packages",
+      "url": "https://github.com/openwrt/packages.git",
+      "commit": "093d551675b1119a06ef224d419905e8d6b2af1a",
+      "upstream_definition": "src-git packages https://git.openwrt.org/feed/packages.git^093d551675b1119a06ef224d419905e8d6b2af1a"
+    },
+    {
+      "name": "luci",
+      "url": "https://github.com/openwrt/luci.git",
+      "commit": "75a306df84a020c57a631ef5b4c02ace56d93387",
+      "upstream_definition": "src-git luci https://git.openwrt.org/project/luci.git^75a306df84a020c57a631ef5b4c02ace56d93387"
+    },
+    {
+      "name": "routing",
+      "url": "https://github.com/openwrt/routing.git",
+      "commit": "48c808034414a2112cf9d5261a20a320e8d0d170",
+      "upstream_definition": "src-git routing https://git.openwrt.org/feed/routing.git^48c808034414a2112cf9d5261a20a320e8d0d170"
+    },
+    {
+      "name": "telephony",
+      "url": "https://github.com/openwrt/telephony.git",
+      "commit": "2618106d5846a4a542fdf5809f0d3ed228ce439b",
+      "upstream_definition": "src-git telephony https://git.openwrt.org/feed/telephony.git^2618106d5846a4a542fdf5809f0d3ed228ce439b"
+    },
+    {
+      "name": "video",
+      "url": "https://github.com/openwrt/video.git",
+      "commit": "094bf58da6682f895255a35a84349a79dab4bf95",
+      "upstream_definition": "src-git video https://github.com/openwrt/video.git^094bf58da6682f895255a35a84349a79dab4bf95"
+    }
+  ],
+  "official_metadata_sha256": {
+    "feeds.buildinfo": "037f68494e8cf059f7cb49dbce7e0f73a3da4db1e73b2b8b7477ff2d2676f40b",
+    "config.buildinfo": "6b9a156f5b26d3eb1570e2bd75f5b92e4fc47e9fb058c643f39be36a4ba8e39c",
+    "version.buildinfo": "47cc6a2e45cd952f6b4d5edaf3ba2259a038a8f7f834b37edcdac78f97078c9c",
+    "openwrt-25.12.6-x86-64.manifest": "c9134de86be04c546a196190f463720300bd8f47859a55d8b21f42277ee5b9c8",
+    "sha256sums": "5515522e025c507802d03d25853c753e278d877dac04f64ef40578112f1d0319",
+    "sha256sums.asc": "dc77abcc074c1a4165d261f9556171ccf039cc6addd991f3f9b29aa00dc42b65"
+  },
+  "local_patches": [],
+  "metadata_exclusions": [
+    {
+      "package": "luci-app-weechat",
+      "reason": "unselected IRC UI has recursive dependency through virtual weechat full/minimal variants in pinned official metadata",
+      "action": "scripts/feeds uninstall luci-app-weechat after feeds install -a; no source patch"
+    }
+  ],
+  "download_mirror_configuration": {
+    "file": "configs/localmirrors",
+    "worktree_destination": "scripts/localmirrors",
+    "priority_mirror": "https://sources.openwrt.org",
+    "verification": "Original pinned recipe hashes remain enforced; no integrity bypass."
+  }
+}

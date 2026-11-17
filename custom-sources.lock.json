@@ -1,0 +1,139 @@
+{
+  "openwrt": "25.12.6",
+  "target": "x86/64",
+  "sources": [
+    {
+      "repo": "https://github.com/jerrykuku/luci-theme-argon",
+      "commit": "c5c0873e122dc767c7ab0198c8bffc6e952b5cfb",
+      "archive": "argon-c5c0873.tar.gz",
+      "sha256": "a9a33eba54caef949d876a52f63037be681f6d9db239875bd46a84e8d35f50ca"
+    },
+    {
+      "repo": "https://github.com/vernesong/OpenClash",
+      "commit": "e553e82e01c697aefbe1555261a503f425e00ccd",
+      "archive": "openclash-e553e82.tar.gz",
+      "sha256": "bbdbdbc3959ed55270b42d4a5d04fce835684567bfef35a15a472a3ab84ada6c"
+    },
+    {
+      "repo": "https://github.com/coolsnowwolf/luci",
+      "commit": "f43c53a60f11f5d635b7127c775e9c04e2be191d",
+      "archive": "lean-luci-f43c53a60f11f5d635b7127c775e9c04e2be191d.tar.gz",
+      "sha256": "5bcaba8e88c917c76c4462d6951d38cbc9175d19ef792e40852221e1b20866cb"
+    },
+    {
+      "repo": "https://github.com/sbwml/luci-app-diskman",
+      "commit": "be87fcb92c472821bcedbefbfc8b7e8d9e039449",
+      "archive": "diskman-be87fcb92c472821bcedbefbfc8b7e8d9e039449.tar.gz",
+      "sha256": "b3be9889f9e12b7cb1347872b2bf6520e6d030f3b5baa6b08f5a347c3556a4bc"
+    },
+    {
+      "repo": "https://github.com/sirpdboy/luci-app-partexp",
+      "commit": "8b6659917d32967cc04afcf9f20bcfe64c3e6b5c",
+      "archive": "partexp-8b6659917d32967cc04afcf9f20bcfe64c3e6b5c.tar.gz",
+      "sha256": "4fe1e996a8dceb228b59d40008b1b6f5d459edc1bc598d1652b5a6ec122457e8"
+    },
+    {
+      "repo": "https://github.com/sirpdboy/luci-app-poweroffdevice",
+      "commit": "8f53359c3234c7c398b846b5425f9b0b017c03ec",
+      "archive": "poweroffdevice-8f53359c3234c7c398b846b5425f9b0b017c03ec.tar.gz",
+      "sha256": "c13ee22e1006c8ef7f2cc14b339c5e0e943947e6e2eafe7513bfb726abe7c162"
+    },
+    {
+      "repo": "https://github.com/linkease/nas-packages-luci",
+      "commit": "a5b59a923c314619a8b87676121dd3dba1e7b69c",
+      "archive": "linkease-luci-a5b59a923c314619a8b87676121dd3dba1e7b69c.tar.gz",
+      "sha256": "c627b4ac4808d47bef8044e8fad9ac18384206ab5032811211827525360f47b4"
+    },
+    {
+      "repo": "https://github.com/linkease/nas-packages",
+      "commit": "7fd4f8d5a968971d23fdcc358a21b2cba59382ef",
+      "archive": "linkease-packages-7fd4f8d5a968971d23fdcc358a21b2cba59382ef.tar.gz",
+      "sha256": "54f40fd28f0370597a71454d74564c7abc0764f342d5de0463c148a59f45f2a4"
+    },
+    {
+      "repo": "https://github.com/dl12345/mwan3",
+      "commit": "cdd4fc56f4de9ccf56d40d6dc04a5b6a4e5a0ae6",
+      "archive": "mwan3-nft-cdd4fc56f4de9ccf56d40d6dc04a5b6a4e5a0ae6.tar.gz",
+      "sha256": "e0367e077ae3160974d48131b0e5a2586fcf1ed8c5135b314c01972e52d61a96"
+    },
+    {
+      "repo": "https://github.com/jearton/luci-app-tailscale",
+      "commit": "4f1613a107cc0c874d60f57471ab46f9858ba0ff",
+      "archive": "tailscale-luci-4f1613a107cc0c874d60f57471ab46f9858ba0ff.tar.gz",
+      "sha256": "889f2eba4c6cdebca95c1e4e3da3a018890f1c1bfc80888d6a0cdc9ce97ae14a"
+    },
+    {
+      "repo": "https://github.com/sirpdboy/luci-app-ddns-go",
+      "commit": "7092e6de6ad9fe3f7d327f70468dfd19e00d6f0e",
+      "archive": "ddns-go-7092e6de6ad9fe3f7d327f70468dfd19e00d6f0e.tar.gz",
+      "sha256": "c1fcda88b16346c9805dbc2bed9e434a47e87838b022429bb9f6b05d24762bbf"
+    },
+    {
+      "repo": "https://github.com/sirpdboy/luci-app-eqosplus",
+      "commit": "c7ea61c971f123b59282131ea5b3438e39118dae",
+      "archive": "eqosplus-c7ea61c971f123b59282131ea5b3438e39118dae.tar.gz",
+      "sha256": "a392f30f154cc4c365791c38f09f1b45bd143d426a1acaa535ec45f2e53d66fb"
+    },
+    {
+      "repo": "https://github.com/destan19/OpenAppFilter",
+      "commit": "0814b87f57181ef238b9a21604c999e98de73cf2",
+      "archive": "openappfilter-0814b87f57181ef238b9a21604c999e98de73cf2.tar.gz",
+      "sha256": "6916e0de0372aa94ae9a573e4f56340a5a68ecd20bb5a0ac94bc3788a59ee67f"
+    },
+    {
+      "repo": "https://github.com/muink/luci-app-netspeedtest",
+      "commit": "11147316267a2046ca6457f1b695e2efdf476891",
+      "archive": "netspeedtest-11147316267a2046ca6457f1b695e2efdf476891.tar.gz",
+      "sha256": "a39fcca594c0589f3c885269924f6ee211c6c234bbaa0b9b0d695392d4ddaec6"
+    },
+    {
+      "repo": "https://github.com/linkease/istore",
+      "commit": "a97ace34f2da358a015b094d326bba2697697f2e",
+      "archive": "istore-a97ace34f2da358a015b094d326bba2697697f2e.tar.gz",
+      "sha256": "d0d0bf210e571fc941a3e829724e11f92068f3cce68c452b18d827769a28d479"
+    },
+    {
+      "repo": "https://github.com/jeessy2/ddns-go",
+      "commit": "b521e5e32e78a484631b7f3e9ce31f4e28c65380",
+      "ref": "v6.17.8",
+      "archive": "ddns-go-6.17.8.tar.gz",
+      "cache_dir": "cache/dl",
+      "sha256": "39b3d8755bd809c0731e81d5a3b5a025704205de68d95e5a9dd1ea192482cbf7"
+    },
+    {
+      "repo": "https://github.com/immortalwrt/luci",
+      "commit": "6dafdfc6a918044f3d4beea816076b6c82c19919",
+      "archive": "immortal-luci-6dafdfc6a918044f3d4beea816076b6c82c19919.tar.gz",
+      "sha256": "8a5efa60bc6ce3b78f56e38580e7ccfceb1c592ed4e1ebebaaaa5c635d1d781c"
+    }
+  ],
+  "release_assets": [
+    {
+      "repo": "https://github.com/MetaCubeX/mihomo",
+      "tag": "v1.19.34",
+      "commit": "0455d0d28c4526937380505153e65a843d8612e8",
+      "asset": "mihomo-linux-amd64-v1-v1.19.34.gz",
+      "sha256": "0c07340a01408d033dda4088ea2a4c1e4d82aeed7b2f84f7c046e93b6ff3290c"
+    },
+    {
+      "repo": "https://github.com/tailscale/tailscale",
+      "tag": "v1.104.7",
+      "commit": "cbc74fe48ef1b1649f69a4d9a602319427e25102",
+      "asset": "tailscale-1.104.7.tar.gz",
+      "sha256": "fa1c922b33d0f6db6b073800d7a62fa84081323d247b21547c63a98ed7ecac14"
+    },
+    {
+      "origin": "https://go.dev/dl/",
+      "tag": "go1.27.4",
+      "asset": "go1.27.4.src.tar.gz",
+      "sha256": "73cfb8571aec0c01177687db87163d46aa20e9779672772891aa17654d9a6099"
+    },
+    {
+      "repo": "https://github.com/netdata/netdata",
+      "tag": "v2.12.3",
+      "commit": "0549a74d8493c32dcea87506ff8de6555ddf6905",
+      "asset": "netdata-x86_64-v2.12.3.gz.run",
+      "sha256": "2b3c1afdf18ef788282108afc95ab8e7884c02cb94991b6f8de6ae49f98bd22c"
+    }
+  ]
+}

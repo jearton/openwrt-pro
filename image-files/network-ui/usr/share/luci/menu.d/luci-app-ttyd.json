@@ -1,0 +1,61 @@
+{
+	"admin/services/ttyd": {
+		"action": {
+			"type": "alias",
+			"path": "admin/system/ttyd"
+		},
+		"depends": {
+			"acl": [
+				"luci-app-ttyd"
+			],
+			"uci": {
+				"ttyd": true
+			}
+		}
+	},
+	"admin/services/ttyd/ttyd": {
+		"action": {
+			"type": "alias",
+			"path": "admin/system/ttyd/ttyd"
+		},
+		"depends": {}
+	},
+	"admin/services/ttyd/config": {
+		"action": {
+			"type": "alias",
+			"path": "admin/system/ttyd/config"
+		},
+		"depends": {}
+	},
+	"admin/system/ttyd": {
+		"title": "Terminal",
+		"action": {
+			"type": "firstchild"
+		},
+		"depends": {
+			"acl": [
+				"luci-app-ttyd"
+			],
+			"uci": {
+				"ttyd": true
+			}
+		},
+		"order": 100
+	},
+	"admin/system/ttyd/ttyd": {
+		"title": "Terminal",
+		"order": 1,
+		"action": {
+			"type": "view",
+			"path": "ttyd/term"
+		}
+	},
+	"admin/system/ttyd/config": {
+		"title": "Config",
+		"order": 2,
+		"action": {
+			"type": "view",
+			"path": "ttyd/config"
+		}
+	}
+}

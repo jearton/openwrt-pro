@@ -1,0 +1,11 @@
+--- a/luci-app-eqosplus/Makefile
++++ b/luci-app-eqosplus/Makefile
+@@ -14,7 +14,7 @@
+ 
+ LUCI_TITLE:=LuCI support for eqosplus.
+ LUCI_DESCRIPTION:=LuCI support for Easy eqosplus(Support speed limit based on IP address).
+-LUCI_DEPENDS:=+ip-full +tc +nftables +bc +kmod-ifb
++LUCI_DEPENDS:=+ip-full +tc +nftables +bash +bc +kmod-ifb
+ LUCI_PKGARCH:=all
+ 
+ PKG_VERSION:=1.3.0

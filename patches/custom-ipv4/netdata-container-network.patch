@@ -1,0 +1,72 @@
+diff --git a/package/custom/netdata/Makefile b/package/custom/netdata/Makefile
+--- a/package/custom/netdata/Makefile
++++ b/package/custom/netdata/Makefile
+@@ -2,7 +2,7 @@
+ 
+ PKG_NAME:=netdata
+ PKG_VERSION:=2.12.3
+-PKG_RELEASE:=2
++PKG_RELEASE:=3
+ PKG_LICENSE:=GPL-3.0-or-later
+ PKG_SOURCE:=netdata-x86_64-v$(PKG_VERSION).gz.run
+ PKG_SOURCE_URL:=https://github.com/netdata/netdata/releases/download/v$(PKG_VERSION)
+@@ -18,7 +18,7 @@
+   CATEGORY:=Administration
+   TITLE:=Netdata real-time monitoring
+   URL:=https://github.com/netdata/netdata
+-  DEPENDS:=@x86_64
++  DEPENDS:=@x86_64 +bash
+   USERID:=netdata:netdata
+ endef
+ 
+@@ -38,6 +38,12 @@
+ 	$(INSTALL_DIR) $(1)/opt/netdata/bin/srv $(1)/opt/netdata/usr/lib/netdata $(1)/opt/netdata/usr/share/netdata $(1)/opt/netdata/usr/libexec/netdata/plugins.d
+ 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/srv/netdata $(1)/opt/netdata/bin/srv/
+ 	$(TARGET_CROSS)strip --strip-debug $(1)/opt/netdata/bin/srv/netdata
++	$(INSTALL_BIN) $(PKG_BUILD_DIR)/bin/systemd-cat-native $(1)/opt/netdata/bin/
++	$(TARGET_CROSS)strip --strip-debug $(1)/opt/netdata/bin/systemd-cat-native
++	$(INSTALL_BIN) $(PKG_BUILD_DIR)/usr/libexec/netdata/plugins.d/cgroup-network $(1)/opt/netdata/usr/libexec/netdata/plugins.d/
++	$(INSTALL_BIN) $(PKG_BUILD_DIR)/usr/libexec/netdata/plugins.d/cgroup-network-helper.sh $(1)/opt/netdata/usr/libexec/netdata/plugins.d/
++	$(TARGET_CROSS)strip --strip-debug $(1)/opt/netdata/usr/libexec/netdata/plugins.d/cgroup-network
++	chmod 0750 $(1)/opt/netdata/usr/libexec/netdata/plugins.d/cgroup-network*
+ 	$(CP) $(PKG_BUILD_DIR)/usr/lib/netdata/conf.d $(1)/opt/netdata/usr/lib/netdata/
+ 	$(CP) $(PKG_BUILD_DIR)/usr/share/netdata/web $(1)/opt/netdata/usr/share/netdata/
+ 	$(INSTALL_DIR) $(1)/etc/netdata $(1)/etc/init.d
+diff --git a/package/custom/netdata/extract-asset.sh b/package/custom/netdata/extract-asset.sh
+--- a/package/custom/netdata/extract-asset.sh
++++ b/package/custom/netdata/extract-asset.sh
+@@ -7,6 +7,12 @@
+ offset=$(head -n 830 "$asset" | wc -c)
+ tail -c "+$((offset + 1))" "$asset" |
+ 	tar -xz -C "$destination" \
+-		./bin/srv/netdata ./usr/lib/netdata/conf.d ./usr/share/netdata/web
++		./bin/srv/netdata ./usr/lib/netdata/conf.d ./usr/share/netdata/web \
++		./bin/systemd-cat-native \
++		./usr/libexec/netdata/plugins.d/cgroup-network \
++		./usr/libexec/netdata/plugins.d/cgroup-network-helper.sh
++helper="$destination/usr/libexec/netdata/plugins.d/cgroup-network-helper.sh"
++grep -Fq '  systemd-cat-native --log-as-netdata' "$helper"
++sed -i 's|^  systemd-cat-native --log-as-netdata|  /opt/netdata/bin/systemd-cat-native --log-as-netdata|' "$helper"
+ test -x "$destination/bin/srv/netdata"
+ test -s "$destination/usr/share/netdata/web/index.html"
+diff --git a/package/custom/netdata/files/netdata.init b/package/custom/netdata/files/netdata.init
+--- a/package/custom/netdata/files/netdata.init
++++ b/package/custom/netdata/files/netdata.init
+@@ -7,11 +7,17 @@
+ 	. /lib/functions/network.sh
+ 
+ 	local address directory
++	local plugins=/opt/netdata/usr/libexec/netdata/plugins.d
+ 	network_get_ipaddr address lan || return 0
+ 	for directory in /var/cache/netdata /var/lib/netdata /var/log/netdata; do
+ 		mkdir -p "$directory" || return 1
+ 		chown netdata:netdata "$directory" || return 1
+ 	done
++
++	# Only the collector enters container network namespaces as root.
++	chown root:netdata "$plugins/cgroup-network" "$plugins/cgroup-network-helper.sh" || return 1
++	chmod 4750 "$plugins/cgroup-network" || return 1
++	chmod 0750 "$plugins/cgroup-network-helper.sh" || return 1
+ 
+ 	procd_open_instance
+ 	procd_set_param command /opt/netdata/bin/srv/netdata -D -c /etc/netdata/netdata.conf -i "$address:19999"

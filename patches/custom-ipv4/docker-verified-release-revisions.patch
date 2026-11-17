@@ -1,0 +1,22 @@
+--- a/utils/dockerd/git-short-commit.sh
++++ b/utils/dockerd/git-short-commit.sh
+@@ -25,6 +25,19 @@
+ 	error "Git clone directory not specified"
+ fi
+ 
++# The source archive SHA256 is still checked by the package recipes.
++# These revisions were resolved against the upstream release tags.
++case "$GIT_URL/$GIT_REF" in
++	github.com/moby/moby/docker-v29.6.1)
++		echo 8ec5ab3
++		exit 0
++		;;
++	github.com/docker/cli/v29.6.1)
++		echo 8900f1d
++		exit 0
++		;;
++esac
++
+ clean_up() {
+ 	rm -rf "${GIT_DIR}"
+ }

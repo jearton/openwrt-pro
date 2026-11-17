@@ -1,0 +1,10 @@
+--- a/luci-app-arpbind/Makefile
++++ b/luci-app-arpbind/Makefile
+@@ -12,6 +12,6 @@
+ /etc/config/arpbind
+ endef
+ 
+-include ../../luci.mk
++include $(TOPDIR)/feeds/luci/luci.mk
+ 
+ # call BuildPackage - OpenWrt buildroot signature

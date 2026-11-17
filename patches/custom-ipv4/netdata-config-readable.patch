@@ -1,0 +1,21 @@
+diff --git a/package/custom/netdata/Makefile b/package/custom/netdata/Makefile
+--- a/package/custom/netdata/Makefile
++++ b/package/custom/netdata/Makefile
+@@ -2,7 +2,7 @@
+ 
+ PKG_NAME:=netdata
+ PKG_VERSION:=2.12.3
+-PKG_RELEASE:=1
++PKG_RELEASE:=2
+ PKG_LICENSE:=GPL-3.0-or-later
+ PKG_SOURCE:=netdata-x86_64-v$(PKG_VERSION).gz.run
+ PKG_SOURCE_URL:=https://github.com/netdata/netdata/releases/download/v$(PKG_VERSION)
+@@ -41,7 +41,7 @@
+ 	$(CP) $(PKG_BUILD_DIR)/usr/lib/netdata/conf.d $(1)/opt/netdata/usr/lib/netdata/
+ 	$(CP) $(PKG_BUILD_DIR)/usr/share/netdata/web $(1)/opt/netdata/usr/share/netdata/
+ 	$(INSTALL_DIR) $(1)/etc/netdata $(1)/etc/init.d
+-	$(INSTALL_CONF) ./files/netdata.conf $(1)/etc/netdata/
++	$(INSTALL_DATA) ./files/netdata.conf $(1)/etc/netdata/
+ 	$(INSTALL_BIN) ./files/netdata.init $(1)/etc/init.d/netdata
+ endef
+ 

@@ -1,0 +1,15 @@
+--- a/luci-app-eqos/Makefile
++++ b/luci-app-eqos/Makefile
+@@ -1,10 +1,10 @@
+ include $(TOPDIR)/rules.mk
+ 
+ LUCI_TITLE:=LuCI support for Easy QoS
+-LUCI_DEPENDS:=+tc +kmod-sched-core +kmod-ifb +kmod-qca-nss-drv-qdisc +kmod-qca-nss-drv-igs
++LUCI_DEPENDS:=+tc +kmod-sched-core +kmod-ifb
+ 
+ PKG_MAINTAINER:=Jianhui Zhao <jianhuizhao329@gmail.com>
+ 
+-include ../../luci.mk
++include $(TOPDIR)/feeds/luci/luci.mk
+ 
+ # call BuildPackage - OpenWrt buildroot signature
