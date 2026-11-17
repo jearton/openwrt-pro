@@ -1,0 +1,372 @@
+diff --git a/utils/ttyd/Makefile b/utils/ttyd/Makefile
+index c6733c4..983f81d 100644
+--- a/utils/ttyd/Makefile
++++ b/utils/ttyd/Makefile
+@@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
+ 
+ PKG_NAME:=ttyd
+ PKG_VERSION:=1.7.7
+-PKG_RELEASE:=1
++PKG_RELEASE:=3
+ 
+ PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+ PKG_SOURCE_URL:=https://codeload.github.com/tsl0922/ttyd/tar.gz/$(PKG_VERSION)?
+@@ -27,7 +27,7 @@ define Package/ttyd
+ 	SECTION:=utils
+ 	CATEGORY:=Utilities
+ 	TITLE:=Command-line tool for sharing terminal over the web
+-	DEPENDS:=+libcap +libopenssl +libjson-c +libuv +zlib +libwebsockets-full
++	DEPENDS:=+libcap +libopenssl +libjson-c +libubus +libubox +libuv +zlib +libwebsockets-full
+ 	URL:=https://github.com/tsl0922/ttyd
+ 	SUBMENU:=Terminal
+ endef
+diff --git a/utils/ttyd/files/ttyd.config b/utils/ttyd/files/ttyd.config
+index 8dbde70..e9bb2da 100644
+--- a/utils/ttyd/files/ttyd.config
++++ b/utils/ttyd/files/ttyd.config
+@@ -1,5 +1,7 @@
+ 
+ config ttyd
+ 	option interface '@lan'
+-	option command '/bin/login'
++	option luci_auth '1'
++	option check_origin '1'
++	option command '/bin/ash -l'
+ 
+diff --git a/utils/ttyd/files/ttyd.init b/utils/ttyd/files/ttyd.init
+index 7e24aea..bf8e3ea 100644
+--- a/utils/ttyd/files/ttyd.init
++++ b/utils/ttyd/files/ttyd.init
+@@ -22,6 +22,7 @@ validate_section_ttyd()
+ 		'client_option:list(string)' \
+ 		'terminal_type:string' \
+ 		'check_origin:bool' \
++		'luci_auth:bool:0' \
+ 		'max_clients:uinteger' \
+ 		'once:bool' \
+ 		'index:string' \
+@@ -47,9 +48,9 @@ ttyd_instance()
+ 	[ "${interface::1}" = @ ] && {
+ 		interface=$(
+ 			. /lib/functions/network.sh
+-			network_get_device device "${interface:1}"
+-			echo -n "$device"
++			network_get_device device "${interface:1}" && printf '%s' "$device"
+ 		)
++		[ -n "$interface" ] || return 0
+ 	}
+ 
+ 	[ "$url_arg" = 0 ] && url_arg=""
+@@ -59,6 +60,24 @@ ttyd_instance()
+ 	[ "$ipv6" = 0 ] && ipv6=""
+ 	[ "$ssl" = 0 ] && ssl=""
+ 
++	local cert key allow_http
++	if [ "$luci_auth" = 1 ] && [ -z "$ssl" ]; then
++		local listen_http listen_https redirect
++		listen_http="$(uci -q get uhttpd.main.listen_http)"
++		listen_https="$(uci -q get uhttpd.main.listen_https)"
++		redirect="$(uci -q get uhttpd.main.redirect_https)"
++		[ -n "$listen_http" ] && [ "$redirect" != 1 ] && allow_http=1
++
++		if [ -n "$listen_https" ]; then
++			cert="$(uci -q get uhttpd.main.cert || echo /etc/uhttpd.crt)"
++			key="$(uci -q get uhttpd.main.key || echo /etc/uhttpd.key)"
++			if [ ! -s "$cert" ] || [ ! -s "$key" ]; then
++				cert=
++			fi
++		fi
++		[ -n "$cert" ] || [ "$allow_http" = 1 ] || return 1
++	fi
++
+ 	procd_open_instance
+ 	procd_set_param command "$PROG" \
+ 		${port:+-p $port} \
+@@ -80,6 +99,14 @@ ttyd_instance()
+ 		${ssl_key:+-K $ssl_key} \
+ 		${ssl_ca:+-A $ssl_ca} \
+ 		${debug:+-d $debug}
++	if [ "$luci_auth" = 1 ]; then
++		procd_append_param command --luci-auth -b /cgi-bin/luci/terminal-session
++		if [ -n "$cert" ]; then
++			procd_append_param command -S -C "$cert" -K "$key"
++			procd_set_param file "$cert" "$key"
++			[ "$allow_http" = 1 ] && procd_append_param command --luci-allow-http
++		fi
++	fi
+ 	config_list_foreach "$1" client_option "procd_append_param command -t"
+ 	procd_append_param command $command
+ 	procd_set_param stdout 1
+@@ -98,5 +125,6 @@ shutdown() {
+ }
+ 
+ service_triggers() {
+-	procd_add_reload_trigger "$NAME"
++	procd_add_reload_trigger "$NAME" uhttpd
++	procd_add_interface_trigger "interface.*" lan /etc/init.d/ttyd restart
+ }
+diff --git a/utils/ttyd/patches/200-luci-session-auth.patch b/utils/ttyd/patches/200-luci-session-auth.patch
+new file mode 100644
+index 0000000..b175330
+--- /dev/null
++++ b/utils/ttyd/patches/200-luci-session-auth.patch
+@@ -0,0 +1,259 @@
++diff --git a/CMakeLists.txt b/CMakeLists.txt
++index 1eab7c7..d70adf7 100644
++--- a/CMakeLists.txt
+++++ b/CMakeLists.txt
++@@ -80,6 +80,8 @@ else()
++     endif()
++ endif()
++ 
+++list(APPEND SOURCE_FILES src/luci-session.c)
+++list(APPEND LINK_LIBS ubus ubox)
++ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
++ target_include_directories(${PROJECT_NAME} PUBLIC ${INCLUDE_DIRS})
++ target_link_libraries(${PROJECT_NAME} ${LINK_LIBS})
++diff --git a/src/http.c b/src/http.c
++index eea62af..9bd94fb 100644
++--- a/src/http.c
+++++ b/src/http.c
++@@ -26,6 +26,15 @@ static int send_unauthorized(struct lws *wsi, unsigned int code, enum lws_token_
++ }
++ 
++ static int check_auth(struct lws *wsi, struct pss_http *pss) {
+++  if (server->luci_auth) {
+++    char sid[33];
+++    if (luci_session_check(wsi, sid)) return AUTH_OK;
+++
+++    if (lws_return_http_status(wsi, HTTP_STATUS_FORBIDDEN, "Open Terminal from an active LuCI administrator session."))
+++      return AUTH_ERROR;
+++    return lws_http_transaction_completed(wsi) ? AUTH_ERROR : AUTH_FAIL;
+++  }
+++
++   if (server->auth_header != NULL) {
++     if (lws_hdr_custom_length(wsi, server->auth_header, strlen(server->auth_header)) > 0) return AUTH_OK;
++     return send_unauthorized(wsi, HTTP_STATUS_PROXY_AUTH_REQUIRED, WSI_TOKEN_HTTP_PROXY_AUTHENTICATE);
++diff --git a/src/luci-session.c b/src/luci-session.c
++new file mode 100644
++index 0000000..03f2241
++--- /dev/null
+++++ b/src/luci-session.c
++@@ -0,0 +1,72 @@
+++#include <libubus.h>
+++#include <libwebsockets.h>
+++#include <string.h>
+++
+++#include "server.h"
+++
+++static bool luci_session_cookie(const char *header, const char *name, char sid[33]) {
+++  const size_t name_len = strlen(name);
+++  bool found = false;
+++
+++  while (*header) {
+++    header += strspn(header, " \t");
+++    const char *next = strchr(header, ';');
+++    const char *end = next ? next : header + strlen(header);
+++    while (end > header && (end[-1] == ' ' || end[-1] == '\t')) end--;
+++
+++    if ((size_t)(end - header) > name_len && !strncmp(header, name, name_len) && header[name_len] == '=') {
+++      const char *value = header + name_len + 1;
+++      if (found || end - value != 32 || strspn(value, "0123456789abcdef") != 32 ||
+++          !strncmp(value, "00000000000000000000000000000000", 32))
+++        return false;
+++
+++      memcpy(sid, value, 32);
+++      sid[32] = '\0';
+++      found = true;
+++    }
+++
+++    if (!next) break;
+++    header = next + 1;
+++  }
+++
+++  return found;
+++}
+++
+++static void access_reply(struct ubus_request *req, int type, struct blob_attr *msg) {
+++  static const struct blobmsg_policy policy[] = {{ .name = "access", .type = BLOBMSG_TYPE_BOOL }};
+++  struct blob_attr *attrs[ARRAY_SIZE(policy)] = {};
+++
+++  if (!msg) return;
+++  blobmsg_parse(policy, ARRAY_SIZE(policy), attrs, blob_data(msg), blob_len(msg));
+++  *(bool *)req->priv = attrs[0] && blobmsg_get_bool(attrs[0]);
+++}
+++
+++bool luci_session_allowed(const char *sid) {
+++  struct ubus_context *ctx = ubus_connect(NULL);
+++  struct blob_buf request = {};
+++  uint32_t object;
+++  bool access = false;
+++
+++  if (!ctx) return false;
+++  if (ubus_lookup_id(ctx, "session", &object) == UBUS_STATUS_OK &&
+++      blob_buf_init(&request, 0) == 0) {
+++    blobmsg_add_string(&request, "ubus_rpc_session", sid);
+++    blobmsg_add_string(&request, "scope", "access-group");
+++    blobmsg_add_string(&request, "object", "luci-app-ttyd");
+++    blobmsg_add_string(&request, "function", "write");
+++    if (ubus_invoke(ctx, object, "access", request.head, access_reply, &access, 250) != UBUS_STATUS_OK)
+++      access = false;
+++  }
+++
+++  blob_buf_free(&request);
+++  ubus_free(ctx);
+++  return access;
+++}
+++
+++bool luci_session_check(struct lws *wsi, char sid[33]) {
+++  char cookie[2048];
+++  const char *name = lws_is_ssl(wsi) ? "sysauth_https" : "sysauth_http";
+++
+++  return lws_hdr_copy(wsi, cookie, sizeof(cookie), WSI_TOKEN_HTTP_COOKIE) > 0 &&
+++         luci_session_cookie(cookie, name, sid) && luci_session_allowed(sid);
+++}
++diff --git a/src/protocol.c b/src/protocol.c
++index 53e65d4..a231caa 100644
++--- a/src/protocol.c
+++++ b/src/protocol.c
++@@ -10,6 +10,8 @@
++ #include "server.h"
++ #include "utils.h"
++ 
+++enum { LUCI_SESSION_CHECK_US = 15000000 };
+++
++ // initial message list
++ static char initial_cmds[] = {SET_WINDOW_TITLE, SET_PREFERENCES};
++ 
++@@ -56,6 +58,7 @@ static bool check_host_origin(struct lws *wsi) {
++   const char *prot, *address, *path;
++   int port;
++   if (lws_parse_uri(buf, &prot, &address, &port, &path)) return false;
+++  if (server->luci_auth && strcmp(prot, lws_is_ssl(wsi) ? "https" : "http")) return false;
++   if (port == 80 || port == 443) {
++     sprintf(buf, "%s", address);
++   } else {
++@@ -181,6 +184,8 @@ static void wsi_output(struct lws *wsi, pty_buf_t *buf) {
++ }
++ 
++ static bool check_auth(struct lws *wsi, struct pss_tty *pss) {
+++  if (server->luci_auth) return luci_session_check(wsi, pss->luci_sid);
+++
++   if (server->auth_header != NULL) {
++     return lws_hdr_custom_copy(wsi, pss->user, sizeof(pss->user), server->auth_header, strlen(server->auth_header)) > 0;
++   }
++@@ -244,12 +249,23 @@ int callback_tty(struct lws *wsi, enum lws_callback_reasons reason, void *user,
++         }
++       }
++ 
+++      if (server->luci_auth) lws_set_timer_usecs(wsi, LUCI_SESSION_CHECK_US);
+++
++       server->client_count++;
++ 
++       lws_get_peer_simple(lws_get_network_wsi(wsi), pss->address, sizeof(pss->address));
++       lwsl_notice("WS   %s - %s, clients: %d\n", pss->path, pss->address, server->client_count);
++       break;
++ 
+++    case LWS_CALLBACK_TIMER:
+++      if (!server->luci_auth) break;
+++      if (!luci_session_allowed(pss->luci_sid)) {
+++        lws_close_reason(wsi, LWS_CLOSE_STATUS_POLICY_VIOLATION, NULL, 0);
+++        return -1;
+++      }
+++      lws_set_timer_usecs(wsi, LUCI_SESSION_CHECK_US);
+++      break;
+++
++     case LWS_CALLBACK_SERVER_WRITEABLE:
++       if (!pss->initialized) {
++         if (pss->initial_cmd_index == sizeof(initial_cmds)) {
++diff --git a/src/server.c b/src/server.c
++index 39f40e9..e16c437 100644
++--- a/src/server.c
+++++ b/src/server.c
++@@ -50,12 +50,16 @@ static lws_retry_bo_t retry = {
++ };
++ #endif
++ 
+++enum { OPT_LUCI_AUTH = 256, OPT_LUCI_ALLOW_HTTP };
+++
++ // command line options
++ static const struct option options[] = {{"port", required_argument, NULL, 'p'},
++                                         {"interface", required_argument, NULL, 'i'},
++                                         {"socket-owner", required_argument, NULL, 'U'},
++                                         {"credential", required_argument, NULL, 'c'},
++                                         {"auth-header", required_argument, NULL, 'H'},
+++                                        {"luci-auth", no_argument, NULL, OPT_LUCI_AUTH},
+++                                        {"luci-allow-http", no_argument, NULL, OPT_LUCI_ALLOW_HTTP},
++                                         {"uid", required_argument, NULL, 'u'},
++                                         {"gid", required_argument, NULL, 'g'},
++                                         {"signal", required_argument, NULL, 's'},
++@@ -332,6 +336,7 @@ int main(int argc, char **argv) {
++   char socket_owner[128] = "";
++   bool browser = false;
++   bool ssl = false;
+++  bool luci_allow_http = false;
++   char cert_path[1024] = "";
++   char key_path[1024] = "";
++   char ca_path[1024] = "";
++@@ -346,6 +351,12 @@ int main(int argc, char **argv) {
++   int c;
++   while ((c = getopt_long(start, argv, opt_string, options, NULL)) != -1) {
++     switch (c) {
+++      case OPT_LUCI_AUTH:
+++        server->luci_auth = true;
+++        break;
+++      case OPT_LUCI_ALLOW_HTTP:
+++        luci_allow_http = true;
+++        break;
++       case 'h':
++         print_help();
++         return 0;
++@@ -520,6 +531,14 @@ int main(int argc, char **argv) {
++     return -1;
++   }
++ 
+++  if (server->luci_auth) {
+++    if (!*iface || server->credential || server->auth_header || server->url_arg) {
+++      fprintf(stderr, "ttyd: LuCI auth requires an interface and cannot be combined with other auth or URL arguments\n");
+++      return -1;
+++    }
+++    server->check_origin = true;
+++  }
+++
++   lws_set_log_level(debug_level, NULL);
++ 
++   char server_hdr[128] = "";
++@@ -560,7 +579,11 @@ int main(int argc, char **argv) {
++       info.ssl_ca_filepath = ca_path;
++       info.options |= LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
++     }
++-    info.options |= LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT | LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
+++    info.options |= LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT;
+++    if (server->luci_auth && luci_allow_http)
+++      info.options |= LWS_SERVER_OPTION_ALLOW_HTTP_ON_HTTPS_LISTENER;
+++    else
+++      info.options |= LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
++   }
++ #endif
++ 
++diff --git a/src/server.h b/src/server.h
++index e13d632..1ca2a70 100644
++--- a/src/server.h
+++++ b/src/server.h
++@@ -41,6 +41,7 @@ struct pss_tty {
++   int initial_cmd_index;
++   bool authenticated;
++   char user[30];
+++  char luci_sid[33];
++   char address[50];
++   char path[128];
++   char **args;
++@@ -61,7 +62,11 @@ typedef struct {
++   bool ws_closed;
++ } pty_ctx_t;
++ 
+++bool luci_session_allowed(const char *sid);
+++bool luci_session_check(struct lws *wsi, char sid[33]);
+++
++ struct server {
+++  bool luci_auth;          // authenticate requests against LuCI session ACLs
++   int client_count;        // client count
++   char *prefs_json;        // client preferences
++   char *credential;        // encoded basic auth credential

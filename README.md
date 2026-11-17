@@ -44,7 +44,7 @@ Technitium 是按需部署的 [Docker 容器](containers/technitium/compose.yaml
 
 - **Netdata**补上容器网卡采集器和配套脚本，修正配置权限，LuCI 直接加载本地仪表盘。
 - **LuCI**修正文件管理器布局和 iptables 后端识别，调整 DHCP/DNS、Macvlan、Docker 和实时监控的菜单入口。
-- **启动和首页**默认禁用 IPv6。Netdata 和 ttyd 随系统启动并监听 LAN，网页终端要求先设置 root 密码并验证 WebSocket 来源。Quickstart 隐藏存储、下载和远程域名卡片。
+- **启动和首页**默认禁用 IPv6。Netdata 和 ttyd 随系统启动并监听 LAN。网页终端复用有终端写权限的 LuCI 会话，并验证 WebSocket 来源。Quickstart 隐藏存储、下载和远程域名卡片。
 - **打包和兼容性**调整 Tailscale 配置文件归属、FileTransfer 的 APK 支持、EQoS 的 x86 构建、EQoS Plus 的 Bash 依赖、mwan3 的构建依赖，并固定 Docker、Mihomo、DDNS-GO 和 Go 的构建输入。
 
 对应文件和应用位置见 [定制补丁索引](patches/README.md)。

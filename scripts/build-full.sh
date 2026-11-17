@@ -80,7 +80,7 @@ done
 for name in luci-nftables-legacy-warning luci-filemanager-layout; do
     git -C feeds/luci apply "$patches/$name.patch"
 done
-git -C feeds/packages apply "$patches/golang-1.27.4.patch" "$patches/docker-verified-release-revisions.patch" "$patches/ttyd-lan-login.patch"
+git -C feeds/packages apply "$patches/golang-1.27.4.patch" "$patches/docker-verified-release-revisions.patch" "$patches/ttyd-luci-session.patch"
 release=26.288.56989~75a306d
 for module in modules/luci-mod-status applications/luci-app-filemanager; do
     sed -i "s|^include ../../luci.mk|PKG_VERSION:=$release\\nPKG_RELEASE:=1\\n\\ninclude ../../luci.mk|" "feeds/luci/$module/Makefile"
@@ -116,7 +116,7 @@ def versions(path):
         return dict(line.strip().split(" - ", 1) for line in stream)
 old, new = map(versions, sys.argv[1:3])
 old["kmod-bonding"] = old["kmod-macvlan"]
-old["ttyd"] = "1.7.7-r2"
+old["ttyd"] = "1.7.7-r3"
 kernel_release = r"(\d+\.\d+\.\d+)~[a-f0-9]{32}(-r\d+)"
 old_kernel, new_kernel = (re.fullmatch(kernel_release, packages["kernel"]) for packages in (old, new))
 if not old_kernel or not new_kernel or old_kernel.groups() != new_kernel.groups():

@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+section='ttyd.@ttyd[0]'
+command="$(uci -q get "$section.command")" || exit 0
+if [ "$command" = /usr/libexec/ttyd-login ]; then
+	uci set "$section.command=/bin/ash -l"
+	uci set "$section.luci_auth=1"
+	uci set "$section.check_origin=1"
+	uci commit ttyd
+fi

@@ -55,7 +55,7 @@ jobs:
 
       - name: Boot the new image and check LAN services
         run: |
-          sudo apt-get install -qy --no-install-recommends qemu-system-x86 ovmf
+          sudo apt-get install -qy --no-install-recommends qemu-system-x86 ovmf python3-websocket
           bash scripts/check-fresh-lan.sh "$RUNNER_TEMP/firmware/openwrt-x86-64-generic-squashfs-combined-efi.img.gz"
 
       - uses: oras-project/setup-oras@22ce207df3b08e061f537244349aac6ae1d214f6 # v1

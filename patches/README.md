@@ -5,7 +5,7 @@
 | 组件 | 补丁 |
 | --- | --- |
 | Netdata | [配置权限](custom-ipv4/netdata-config-readable.patch)、[容器网卡采集](custom-ipv4/netdata-container-network.patch)、[LuCI 本地仪表盘](custom-ipv4/netdata-luci-bundled-dashboard.patch) |
-| ttyd | [LAN 监听、接口未就绪时停止监听，以及 root 密码门槛](custom-ipv4/ttyd-lan-login.patch) |
+| ttyd | [LAN 监听、LuCI 会话和 WebSocket 权限校验](custom-ipv4/ttyd-luci-session.patch) |
 | LuCI | [iptables 后端识别](custom-ipv4/luci-nftables-legacy-warning.patch)、[文件管理样式](custom-ipv4/luci-filemanager-layout.patch) |
 | Docker、Tailscale | [Docker 版本合规](custom-ipv4/docker-verified-release-revisions.patch)、[Tailscale 文件归属](custom-ipv4/tailscale-file-ownership.patch) |
 | OpenClash、DDNS-GO、Go | [Mihomo 配方](custom-ipv4/openclash-mihomo.Makefile)、[DDNS-GO 版本](custom-ipv4/ddns-go-6.17.8.patch)、[Go 版本](custom-ipv4/golang-1.27.4.patch) |

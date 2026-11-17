@@ -7,7 +7,7 @@
 | 登录页、系统 → Argon 主题设置 | [Argon 3.1.4](https://github.com/jerrykuku/luci-theme-argon) | 主题、壁纸和中文设置 |
 | 首页、网络向导 | [iStoreOS Quickstart](https://github.com/istoreos/quickstart)、[iStore](https://github.com/linkease/istore) | 首页、网络向导和应用入口；隐藏存储、下载和远程穿透卡片 |
 | 系统 → 实时监控 | [Netdata 2.12.3](https://github.com/netdata/netdata)、LuCI 入口 | 主机和容器指标 |
-| 系统 → 终端 | [ttyd](https://github.com/tsl0922/ttyd) | 仅监听 LAN 的 Web 终端，设置 root 密码后可登录 |
+| 系统 → 终端 | [ttyd](https://github.com/tsl0922/ttyd) | 仅监听 LAN 的 Web 终端，复用有终端写权限的 LuCI 会话 |
 | 系统 → 文件管理、文件传输、磁盘管理、分区扩容 | LuCI File Manager、FileTransfer、[DiskMan](https://github.com/sbwml/luci-app-diskman)、[PartExp](https://github.com/sirpdboy/luci-app-partexp) | 本机系统维护 |
 | 系统 → 定时重启、关机、自定义命令 | Autoreboot、PoweroffDevice、LuCI Commands | 管理操作 |
 | 服务 → 容器管理 | Docker 29.6.1、Dockerman | 管理容器、镜像、网络和卷 |
