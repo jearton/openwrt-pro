@@ -28,7 +28,9 @@ diskutil eject /dev/diskN
 
 ## 从 U 盘试启动
 
-把 U 盘插到软路由。在 UEFI 启动菜单选择标有 **UEFI** 的 U 盘。启动后在控制台用 `ip -4 addr show br-lan` 确认 LAN 地址。新装的官方网络默认 LAN 地址为 `192.168.1.1`，以设备控制台实际地址为准。把管理电脑接入正确的 LAN 口，确认能获得 DHCP 地址并访问 LuCI。设置 root 密码，再核对 WAN/LAN 对应的物理网口及 IPv6 禁用状态。按需启用服务并分别验证。
+把 U 盘插到软路由。在 UEFI 启动菜单选择标有 **UEFI** 的 U 盘。通用 x86 默认给 `eth0` 分配 LAN，给存在的 `eth1` 分配 WAN。具有专用板型规则的设备使用自己的端口分配，机壳印刷的网口号码由硬件决定。新安装的 LAN 默认 IPv4 地址是 `192.168.1.1/24`。恢复旧配置后按实际接口和地址访问。[默认端口规则](https://github.com/openwrt/openwrt/blob/v25.12.6/package/base-files/files/etc/board.d/99-default_network) · [x86 板型规则](https://github.com/openwrt/openwrt/blob/v25.12.6/target/linux/x86/base-files/etc/board.d/02_network)
+
+在控制台执行 `uci show network`、`ip -br link` 和 `ip -br -4 addr`。把网线逐口插拔，观察哪个 Linux 接口变成 `LOWER_UP`，对照配置确认 LAN 设备。把管理电脑接到 LAN，设置以太网 IPv4 为 DHCP，访问 `http://192.168.1.1`。直连测试时，若确认接的是 LAN 且 DHCP 暂未下发地址，可给电脑临时设置 `192.168.1.2/24`。接 WAN 或未加入 LAN 的端口时需要换到 LAN。要用其它口管理，可先通过 LAN 登录，在「网络 → 接口 → 设备」把所需端口加入 LAN 网桥，同时保留当前可用 LAN 口。设置 root 密码，核对 WAN/LAN 和 IPv6 状态，再按需启用服务。
 
 从 U 盘启动时，系统和配置会留在 U 盘。需要保留原内置盘时，关机后拔掉试用 U 盘即可回到原启动盘。
 

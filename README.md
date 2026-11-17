@@ -39,6 +39,15 @@
 
 Technitium 是按需部署的 [Docker 容器](containers/technitium/compose.yaml)，用于本地权威 DNS 区域。安装方式见 [DNS 文档](docs/technitium.md)，源码见 [Technitium DNS Server](https://github.com/TechnitiumSoftware/DnsServer)。镜像包含的具体版本见 [APK 清单](manifests/openwrt-x86-64-generic.manifest)。
 
+### 本项目的补丁和调整
+
+- **Netdata**补上容器网卡采集器和配套脚本，修正配置权限，LuCI 直接加载本地仪表盘。
+- **LuCI**修正文件管理器布局和 iptables 后端识别，调整 DHCP/DNS、Macvlan、Docker 和实时监控的菜单入口。
+- **启动和首页**默认禁用 IPv6，ttyd 绑定回环并检查 WebSocket 来源，Quickstart 隐藏存储、下载和远程域名卡片。
+- **打包和兼容性**调整 Tailscale 配置文件归属、FileTransfer 的 APK 支持、EQoS 的 x86 构建、EQoS Plus 的 Bash 依赖、mwan3 的构建依赖，并固定 Docker、Mihomo、DDNS-GO 和 Go 的构建输入。
+
+对应文件和应用位置见 [定制补丁索引](patches/README.md)。
+
 ## 文档和下载
 
 - [固件方案、定制步骤与升级](docs/firmware.md)
