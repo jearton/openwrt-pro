@@ -20,7 +20,7 @@ permissions:
   packages: write
 
 concurrency:
-  group: build-full-firmware
+  group: build-full-firmware-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:

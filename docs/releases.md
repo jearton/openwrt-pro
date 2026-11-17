@@ -23,4 +23,4 @@ sha256sum -c SHA256SUMS
    - `SHA256SUMS`
 4. 查看 **Publish firmware to GHCR** 的 Actions 日志。重新发布已存在的 Release 可通过工作流的手动触发入口执行。新的固件内容使用新版本 tag。
 
-完整定制版的构建入口为 **Build full firmware and publish candidate**。该工作流用 GitHub 托管的 Linux x86_64 runner 编译，完整 APK 名称和版本与仓库中的清单逐项比对，生成 `ci-运行编号-尝试次数` 的 GHCR 候选镜像。手动重跑从 Actions 的 workflow_dispatch 入口进入。命名 Release 的发布流程见上文。首次创建的 GitHub Package 默认私有，公开仓库的所有者可在该 Package 的设置里将它切换为 Public。[GitHub Packages 可见性说明](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility#configuring-visibility-of-packages-for-your-personal-account)
+完整定制版的构建入口为 **Build full firmware and publish candidate**。工作流在 GitHub 托管的 Linux x86_64 runner 上编译，对照已发布的 APK 清单和构建脚本声明的差异逐项检查名称与版本，并验证所有内核模块的 ABI。通过后生成 `ci-运行编号-尝试次数` 的 GHCR 候选镜像。手动重跑从 Actions 的 workflow_dispatch 入口进入。命名 Release 的发布流程见上文。首次创建的 GitHub Package 默认私有，公开仓库的所有者可在该 Package 的设置里将它切换为 Public。[GitHub Packages 可见性说明](https://docs.github.com/en/packages/learn-github-packages/configuring-a-packages-access-control-and-visibility#configuring-visibility-of-packages-for-your-personal-account)
