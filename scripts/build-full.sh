@@ -1,0 +1,116 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: GPL-3.0-or-later
+set -euo pipefail
+
+repo=$(cd -- "$(dirname -- "$0")/.." && pwd)
+if [[ $# != 2 || -e $1 || -e $2 ]]; then
+    echo "Usage: $0 NEW_OPENWRT_DIRECTORY NEW_FIRMWARE_DIRECTORY" >&2
+    exit 2
+fi
+tree="$(realpath -m -- "$1")"
+out="$(realpath -m -- "$2")"
+recipes="$repo/sources/full/package/custom"
+patches="$repo/patches/custom-ipv4"
+ui="$repo/packages/istoreos-ui-2026110611"
+
+readarray -t source < <(python3 - "$repo/sources.lock.json" <<'PY'
+import json, sys
+lock = json.load(open(sys.argv[1]))
+for key in ("url", "ref", "commit"):
+    print(lock["source"][key])
+PY
+)
+git clone --depth 1 --branch "${source[1]}" "${source[0]}" "$tree"
+cd "$tree"
+test "$(git rev-parse HEAD)" = "${source[2]}"
+python3 - "$repo/sources.lock.json" > feeds.conf <<'PY'
+import json, sys
+for feed in json.load(open(sys.argv[1]))["feeds"]:
+    print(f'src-git {feed["name"]} {feed["url"]}^{feed["commit"]}')
+PY
+./scripts/feeds update -a
+./scripts/feeds install -a
+
+for package in "$recipes"/* netdata quickstart luci-app-quickstart luci-i18n-quickstart-zh-cn luci-app-weechat; do
+    name=$(basename "$package")
+    if find package/feeds -type l -name "$name" -print -quit | grep -q .; then
+        ./scripts/feeds uninstall "$name"
+    fi
+done
+# The custom recipe directory is named tailscale-core but provides tailscale.
+if find package/feeds -type l -name tailscale -print -quit | grep -q .; then
+    ./scripts/feeds uninstall tailscale
+fi
+mkdir -p package/custom files
+cp -a "$recipes/." "$repo/packages/netdata" package/custom/
+cp -a "$repo/sources/full/files/." files/
+cp -a "$repo/image-files/network-ui/usr" "$repo/image-files/network-ui/www" files/
+install -D -m 0755 "$repo/packages/network-ui/93-network-ui" files/etc/uci-defaults/93-network-ui
+
+mkdir -p .ui-inputs
+python3 - "$ui" "$tree" <<'PY'
+import hashlib, json, pathlib, subprocess, sys, tempfile
+ui = pathlib.Path(sys.argv[1])
+tree = pathlib.Path(sys.argv[2])
+meta = json.loads((ui / "ui-source.json").read_text())
+base = "https://dl.istoreos.com/iStoreOS/x86_64_efi/"
+with tempfile.TemporaryDirectory(dir=tree / ".ui-inputs") as path:
+    source = pathlib.Path(path)
+    gz = source / "image.gz"
+    subprocess.run(["curl", "-fLsS", "--retry", "3", "--max-time", "600", base + meta["image"], "-o", str(gz)], check=True)
+    with gz.open("rb") as artifact:
+        if hashlib.file_digest(artifact, "sha256").hexdigest() != meta["sha256"]:
+            raise SystemExit("Unexpected iStoreOS archive SHA-256")
+    with (source / "image.raw").open("wb") as image:
+        subprocess.run(["gzip", "-dc", str(gz)], stdout=image, check=True)
+    subprocess.run([sys.executable, str(ui / "prepare-payload.py"), str(source), str(tree / ".ui-inputs/recipes"), "/usr/bin/unsquashfs"], check=True)
+PY
+for name in quickstart luci-app-quickstart luci-i18n-quickstart-zh-cn; do
+    cp -a ".ui-inputs/recipes/$name" package/custom/
+done
+sed -i 's/^PKG_RELEASE:=1$/PKG_RELEASE:=2/' package/custom/quickstart/Makefile
+printf "\tlist module 'remoteDomain'\n" >> package/custom/quickstart/payload/etc/config/quickstart
+
+for name in netdata-config-readable netdata-container-network netdata-luci-bundled-dashboard; do
+    git apply "$patches/$name.patch"
+done
+for name in luci-nftables-legacy-warning luci-filemanager-layout; do
+    git -C feeds/luci apply "$patches/$name.patch"
+done
+git -C feeds/packages apply "$patches/golang-1.27.4.patch" "$patches/docker-verified-release-revisions.patch"
+release=26.288.56989~75a306d
+for module in modules/luci-mod-status applications/luci-app-filemanager; do
+    sed -i "s|^include ../../luci.mk|PKG_VERSION:=$release\\nPKG_RELEASE:=1\\n\\ninclude ../../luci.mk|" "feeds/luci/$module/Makefile"
+done
+lmo_src=feeds/luci/modules/luci-base/src
+make -C "$lmo_src" po2lmo
+mkdir -p files/usr/lib/lua/luci/i18n
+"$lmo_src/po2lmo" "$repo/image-files/network-ui/office-menus.zh-cn.po" files/usr/lib/lua/luci/i18n/office-menus.zh-cn.lmo
+cp "$repo/profiles/network-ui.config" .config
+make defconfig
+grep -Fx CONFIG_USE_APK=y .config
+grep -Fx 'CONFIG_GRUB_BOOTOPTS="ipv6.disable=1"' .config
+grep -Fx '# CONFIG_PACKAGE_dnsmasq_full_dhcpv6 is not set' .config
+grep -Fx CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn=y .config
+jobs="${OPENWRT_JOBS:-$(nproc)}"
+export GOPROXY='https://proxy.golang.org|direct'
+make -j"$jobs" download
+make -j"$jobs" V=s > build.log 2>&1 || { tail -n 180 build.log; exit 1; }
+target=bin/targets/x86/64
+image=openwrt-x86-64-generic-squashfs-combined-efi.img.gz
+manifest=openwrt-x86-64-generic.manifest
+gzip -t "$target/$image"
+python3 - "$repo/manifests/$manifest" "$target/$manifest" <<'PY'
+import sys
+def versions(path):
+    with open(path) as stream:
+        return dict(line.strip().split(" - ", 1) for line in stream)
+old, new = map(versions, sys.argv[1:])
+delta = {k: (old.get(k), new.get(k)) for k in old.keys() | new.keys() if old.get(k) != new.get(k)}
+if delta:
+    raise SystemExit(f"Package manifest drift: {delta}")
+print(f"Verified all {len(new)} package versions")
+PY
+mkdir -p "$out"
+cp "$target/$image" "$target/$manifest" "$out/"
+(cd "$out" && sha256sum -- "$image" "$manifest" > SHA256SUMS)

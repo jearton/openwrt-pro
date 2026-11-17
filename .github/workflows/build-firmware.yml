@@ -1,0 +1,83 @@
+name: Build full firmware and publish candidate
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/build-firmware.yml'
+      - 'scripts/build-full.sh'
+      - '*.lock.json'
+      - 'sources/full/**'
+      - 'profiles/network-ui.config'
+      - 'packages/**'
+      - 'patches/**'
+      - 'image-files/**'
+      - 'manifests/openwrt-x86-64-generic.manifest'
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: build-full-firmware
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - name: Prepare the Linux build host
+        run: |
+          sudo python3 - <<'PY'
+          import shutil
+          from pathlib import Path
+          for directory in ("/usr/local/lib/android", "/usr/share/dotnet", "/opt/ghc"):
+              path = Path(directory)
+              if path.is_dir() and not path.is_symlink():
+                  shutil.rmtree(path)
+          PY
+          sudo apt-get update -q
+          sudo apt-get install -qy build-essential clang flex bison g++ gawk gcc-multilib \
+            g++-multilib gettext git libncurses-dev libssl-dev libelf-dev \
+            python3-dev python3-setuptools rsync swig unzip zlib1g-dev \
+            file gperf time zstd xz-utils squashfs-tools gnutls-bin
+          df -h "$RUNNER_TEMP"
+
+      - name: Compile the complete x86/64 image
+        run: ./scripts/build-full.sh "$RUNNER_TEMP/openwrt" "$RUNNER_TEMP/firmware"
+
+      - uses: oras-project/setup-oras@22ce207df3b08e061f537244349aac6ae1d214f6 # v1
+        with:
+          version: 1.3.0
+
+      - name: Publish and verify candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ref="ghcr.io/${GITHUB_REPOSITORY,,}/firmware:ci-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          image=openwrt-x86-64-generic-squashfs-combined-efi.img.gz
+          manifest=openwrt-x86-64-generic.manifest
+          printf '%s' "$GH_TOKEN" | oras login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          (
+            cd "$RUNNER_TEMP/firmware"
+            oras push "$ref" --artifact-type application/vnd.openwrt.firmware.v1 \
+              --annotation "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+              --annotation "org.opencontainers.image.revision=$GITHUB_SHA" \
+              --annotation "org.opencontainers.image.description=OpenWrt x86/64 CI candidate" \
+              "$image:application/gzip" "$manifest:text/plain" SHA256SUMS:text/plain
+          )
+          digest=$(oras manifest fetch --descriptor "$ref" | jq -er .digest)
+          immutable_ref="${ref%:*}@$digest"
+          oras pull "$immutable_ref" --output "$RUNNER_TEMP/ghcr-check"
+          (
+            cd "$RUNNER_TEMP/ghcr-check"
+            cmp SHA256SUMS "$RUNNER_TEMP/firmware/SHA256SUMS"
+            sha256sum --strict -c SHA256SUMS
+          )
+          printf '### Full firmware candidate\n\n`oras pull %s`\n' "$immutable_ref" >> "$GITHUB_STEP_SUMMARY"

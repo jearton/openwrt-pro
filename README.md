@@ -43,7 +43,7 @@ Technitium 是按需部署的 [Docker 容器](containers/technitium/compose.yaml
 
 - [固件方案、定制步骤与升级](docs/firmware.md)
 - [额外组件与 LuCI 菜单](docs/components.md) · [定制补丁索引](patches/README.md)
-- [日常使用和验收](docs/usage.md)
+- [日常使用和验收](docs/usage.md) · [从 U 盘启动或安装到内置 SSD](docs/physical-install.md)
 - [Technitium 与 AdGuard Home 安装](docs/technitium.md)
 - [Technitium Compose 配置](containers/technitium/compose.yaml)
 - [CI、GitHub Packages 与固件下载](docs/releases.md) · [构建产物摘要与 APK 清单](manifests/README.md)

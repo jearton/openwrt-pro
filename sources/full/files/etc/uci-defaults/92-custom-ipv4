@@ -1,0 +1,18 @@
+#!/bin/sh
+
+if [ -d /www/luci-static/argon ]; then
+	uci set luci.main.mediaurlbase='/luci-static/argon'
+	uci commit luci
+	if uci -q get argon.@global[0] >/dev/null; then
+		uci set argon.@global[0].online_wallpaper='bing'
+		uci commit argon
+	fi
+fi
+
+for service in openclash adguardhome dockerd ddns-go tailscale mwan3 appfilter unblockneteasemusic ttyd sqm netdata; do
+	if [ -x "/etc/init.d/$service" ]; then
+		"/etc/init.d/$service" disable
+	fi
+done
+
+exit 0

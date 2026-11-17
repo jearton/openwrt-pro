@@ -1,0 +1,17 @@
+#!/bin/sh
+# IPv4-only default for the x86 image; no lab address or credential is embedded.
+uci -q delete network.wan6 || true
+uci -q delete network.lan.ip6assign || true
+uci -q delete network.lan.ip6hint || true
+uci -q delete network.globals.ula_prefix || true
+uci set network.lan.ipv6='0'
+uci set network.lan.delegate='0'
+uci set network.wan.ipv6='0'
+uci set network.wan.delegate='0'
+uci set dhcp.lan.ra='disabled'
+uci set dhcp.lan.dhcpv6='disabled'
+uci set dhcp.lan.ndp='disabled'
+uci commit network
+uci commit dhcp
+/etc/init.d/odhcpd disable
+exit 0
