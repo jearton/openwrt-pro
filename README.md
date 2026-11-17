@@ -7,7 +7,7 @@
 - [日常使用和验收](docs/usage.md)
 - [Technitium 与 AdGuard Home 安装](docs/technitium.md)
 - [Technitium Compose 配置](containers/technitium/compose.yaml)
-- [构建产物摘要与 APK 清单](manifests/README.md)
+- [CI、GitHub Packages 与固件下载](docs/releases.md) · [构建产物摘要与 APK 清单](manifests/README.md)
 - [底座和 feeds 锁定版本](sources.lock.json) · [第三方来源](custom-sources.lock.json)
 
 项目代码采用 GPL-3.0-or-later。各上游组件按其原许可证使用。源码锁和示例配置可公开复用，生成的镜像、软件包签名密钥和 DNS 数据在部署环境独立保管。

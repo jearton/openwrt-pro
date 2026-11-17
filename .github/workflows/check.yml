@@ -1,0 +1,56 @@
+name: Check repository
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Check image manifest and Netdata patches
+        run: |
+          (cd manifests && sha256sum --strict --ignore-missing -c SHA256SUMS)
+          bash -n scripts/prepare-openwrt.sh scripts/verify-firmware.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          import shutil
+          import subprocess
+          import tempfile
+
+          repo = Path.cwd()
+          configs = list(repo.glob("*.lock.json")) + list((repo / "image-files").rglob("*.json"))
+          for config in configs:
+              json.loads(config.read_text())
+
+          with tempfile.TemporaryDirectory() as directory:
+              tree = Path(directory)
+              shutil.copytree(repo / "packages/netdata", tree / "package/custom/netdata")
+              subprocess.run(["git", "init", "-q"], cwd=tree, check=True)
+              for name in ("netdata-config-readable", "netdata-container-network"):
+                  patch = repo / f"patches/custom-ipv4/{name}.patch"
+                  subprocess.run(["git", "apply", "--check", str(patch)], cwd=tree, check=True)
+                  subprocess.run(["git", "apply", str(patch)], cwd=tree, check=True)
+              for script in ("extract-asset.sh", "files/netdata.init"):
+                  subprocess.run(["sh", "-n", str(tree / "package/custom/netdata" / script)], check=True)
+          PY
+      - name: Check Technitium loopback ports
+        run: |
+          docker compose -f containers/technitium/compose.yaml config --format json |
+            python3 -c '
+          import json, sys
+          service = json.load(sys.stdin)["services"]["technitium"]
+          actual = {(p["host_ip"], int(p["published"]), p["target"], p["protocol"]) for p in service["ports"]}
+          expected = {("127.0.0.1", 1053, 53, "tcp"), ("127.0.0.1", 1053, 53, "udp"),
+                      ("127.0.0.1", 5380, 5380, "tcp")}
+          if actual != expected:
+              raise SystemExit(f"Unexpected Technitium port mappings: {actual}")
+          '
