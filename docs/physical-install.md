@@ -38,6 +38,38 @@ WAN 未接线时，LAN DHCP 和 LuCI 仍可使用。全新写入的镜像使用 
 
 从 U 盘启动时，系统和配置会留在 U 盘。需要保留原内置盘时，关机后拔掉试用 U 盘即可回到原启动盘。
 
+## 验收实时监控和终端
+
+管理电脑直连隔离 LAN 时，通过 `http://192.168.1.1` 登录 LuCI。在「系统 → 实时监控」确认 Netdata 能显示图表，在「系统 → 管理权」设置 root 密码，再打开「系统 → 终端」并用 root 密码登录。两个面板使用 LAN 的 `19999` 和 `7681` 端口。若 LAN 地址改过，使用实际地址。[ttyd 监听和来源校验](https://github.com/tsl0922/ttyd#command-line-options)
+
+早期镜像 `v25.12.6-20261117` 首启关闭了两个服务，并把 ttyd 绑定到回环设备。若已安装该镜像，先在 LuCI 设置 root 密码，再从物理控制台运行以下命令。适用于直连、可信的 LAN。
+
+```sh
+cp /etc/config/ttyd /root/ttyd.before-lan
+uci set 'ttyd.@ttyd[0].interface=@lan'
+uci set 'ttyd.@ttyd[0].command=/bin/login'
+uci set 'ttyd.@ttyd[0].check_origin=1'
+uci commit ttyd
+/etc/init.d/netdata enable
+/etc/init.d/netdata start
+/etc/init.d/ttyd enable
+/etc/init.d/ttyd restart
+/etc/init.d/netdata status
+/etc/init.d/ttyd status
+```
+
+刷新 LuCI 的两个页面。也可在管理电脑单独打开 `http://192.168.1.1:19999/v3/` 与 `http://192.168.1.1:7681/` 核实后端。若服务未运行，在路由器查看 `logread -e netdata` 和 `logread -e ttyd`。
+
+要回退到早期镜像的首启状态，停止并禁用两个服务，再恢复 ttyd 配置。
+
+```sh
+/etc/init.d/netdata stop
+/etc/init.d/netdata disable
+/etc/init.d/ttyd stop
+/etc/init.d/ttyd disable
+cp /root/ttyd.before-lan /etc/config/ttyd
+```
+
 ## 安装到内置 SSD
 
 可以将内置 SSD 拆下接到 Mac，确认型号和容量后按相同方法将镜像写入 SSD。内置盘无法拆卸时，用**单独的 Linux Live U 盘**启动软路由，从另一介质提供已经校验的 OpenWrt 镜像。

@@ -9,7 +9,7 @@ if [ -d /www/luci-static/argon ]; then
 	fi
 fi
 
-for service in openclash adguardhome dockerd ddns-go tailscale mwan3 appfilter unblockneteasemusic ttyd sqm netdata; do
+for service in openclash adguardhome dockerd ddns-go tailscale mwan3 appfilter unblockneteasemusic sqm; do
 	if [ -x "/etc/init.d/$service" ]; then
 		"/etc/init.d/$service" disable
 	fi

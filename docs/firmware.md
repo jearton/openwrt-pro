@@ -43,6 +43,7 @@ make -j"$(nproc)" V=s
 | [LuCI 文件管理布局](../patches/custom-ipv4/luci-filemanager-layout.patch) | 文件路径栏和表格适应视口。 |
 | [Tailscale 文件归属](../patches/custom-ipv4/tailscale-file-ownership.patch) | 由 LuCI 插件提供服务和配置文件，避免重复归属。 |
 | [Docker 版本来源](../patches/custom-ipv4/docker-verified-release-revisions.patch) | 对照固定的 Docker、containerd 和 runc 发布提交。 |
-| [启动时配置](../packages/network-ui/93-network-ui) | ttyd 绑定回环，启用 WebSocket 源校验等网络界面默认设置。 |
+| [终端首启](../patches/custom-ipv4/ttyd-lan-login.patch) | ttyd 仅绑定 LAN，检查 WebSocket 来源，设置 root 密码后才能登录。 |
+| [启动时配置](../sources/full/files/etc/uci-defaults/92-custom-ipv4) | 保留 Netdata 和 ttyd 的开机启动。 |
 
 升级前更新来源锁和校验和。先对目标源码执行 `git apply --check`，再构建并比较 manifest 差异。保留前一版 APK、系统盘和路由器配置备份。
