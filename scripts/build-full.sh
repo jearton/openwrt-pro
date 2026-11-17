@@ -63,7 +63,11 @@ with tempfile.TemporaryDirectory(dir=tree / ".ui-inputs") as path:
             raise SystemExit("Unexpected iStoreOS archive SHA-256")
     with (source / "image.raw").open("wb") as image:
         subprocess.run(["gzip", "-dc", str(gz)], stdout=image, check=True)
-    subprocess.run([sys.executable, str(ui / "prepare-payload.py"), str(source), str(tree / ".ui-inputs/recipes"), "/usr/bin/unsquashfs"], check=True)
+    subprocess.run([
+        sys.executable, str(ui / "prepare-payload.py"), str(source),
+        str(tree / ".ui-inputs/recipes"), "/usr/bin/unsquashfs",
+        "quickstart", "luci-app-quickstart", "luci-i18n-quickstart-zh-cn",
+    ], check=True)
 PY
 for name in quickstart luci-app-quickstart luci-i18n-quickstart-zh-cn; do
     cp -a ".ui-inputs/recipes/$name" package/custom/

@@ -6,7 +6,8 @@ import shutil
 import subprocess
 import sys
 
-source, staging, extractor = map(Path, sys.argv[1:])
+source, staging, extractor = map(Path, sys.argv[1:4])
+selected_packages = set(sys.argv[4:])
 raw = source / "image.raw"
 artifact = source / "image.gz"
 release_sha = "90bf15fe530801540c521189184ea94137a1e1b634cca02b04f6c681f07a39df"
@@ -44,6 +45,11 @@ expected = {
     "luci-i18n-argon-zh-cn":"26.225.13967~138463c",
     "luci-i18n-argon-config-zh-cn":"26.218.10356~7efc088",
 }
+if selected_packages:
+    unknown = selected_packages - expected.keys()
+    if unknown:
+        raise SystemExit(f"Unknown iStoreOS packages: {sorted(unknown)}")
+    expected = {name: version for name, version in expected.items() if name in selected_packages}
 assert all(packages[p][0]["V"]==v for p,v in expected.items())
 extract_file=staging/"extract.paths"
 metadata={}
