@@ -3,9 +3,11 @@
 GitHub Packages 用 OCI 制品存储 EFI 固件、APK 清单和 SHA-256 校验和。使用 ORAS 下载并核对校验和：
 
 ```sh
-oras pull ghcr.io/jearton/openwrt-pro/firmware:v25.12.6-20261117
+oras pull ghcr.io/jearton/openwrt-pro/firmware:v25.12.6-20261118
 sha256sum -c SHA256SUMS
 ```
+
+也可以从 [v25.12.6-20261118 的 GitHub Release](https://github.com/jearton/openwrt-pro/releases/tag/v25.12.6-20261118) 直接下载镜像和 SHA-256。
 
 安装或升级前，先在隔离环境复验 EFI 启动、IPv6 禁用、LuCI 和 DNS。保留旧磁盘和配置备份。具体步骤见[固件方案](firmware.md)。
 

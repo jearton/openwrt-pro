@@ -84,4 +84,4 @@ gzip -dc openwrt-x86-64-generic-squashfs-combined-efi.img.gz |
 sudo sync
 ```
 
-关机，拔掉 Linux Live U 盘，从内置 SSD 的 UEFI 项启动。先单机复验 LAN 管理、DHCP 和端口映射，再接入原网络。需要 Technitium 时，部署容器及 DNS 转发见 [Technitium 安装文档](technitium.md)。
+关机，拔掉 Linux Live U 盘，从内置 SSD 的 UEFI 项启动。先单机复验 LAN 管理、DHCP 和端口映射，再接入原网络。当前固件内置原生 Technitium。通过「服务 → Technitium DNS」打开控制台，配置方法见 [Technitium 使用文档](technitium.md)。

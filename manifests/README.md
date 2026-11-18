@@ -1,7 +1,5 @@
 # x86/64 网络界面镜像
 
-这里记录完整网络界面方案的 APK 清单和构建摘要。当前清单包含 470 个 APK，Netdata 为 2.12.3-r3。
+此目录对应 [v25.12.6-20261118](https://github.com/jearton/openwrt-pro/releases/tag/v25.12.6-20261118) 的 189 构建制品。APK 清单包含 466 个包。内置 Technitium 15.6.2、LuCI 插件 1.0.0、Netdata 2.12.3-r3 和 `kmod-bonding`。AdGuard Home 默认停用，镜像省去 Docker 组件。
 
-在源码构建树中保留生成的 EFI 镜像。使用此目录的 SHA256SUMS 核对对应制品。公开仓库提供配置、配方和版本记录，镜像构建输出由部署者保存。
-
-已在隔离环境用安装后的 Netdata 2.12.3-r3 验证 Technitium 容器的网络指标。用独立客户端通过 AdGuard Home 发起 70 次唯一的区域查询，Netdata 返回了有收发流量的样本。完整镜像通过构建和静态解包核验。
+使用本目录的 SHA256SUMS 核对对应 EFI 镜像和 APK 清单。镜像通过静态解包、内核模块 ABI 核验和隔离实验验收。9000 验证了 EFI 启动、原生服务重启自启和浏览器管理，9001 验证了 IPv4 DHCP、设备名解析、DNS 过滤及 OpenClash 白名单分流。
