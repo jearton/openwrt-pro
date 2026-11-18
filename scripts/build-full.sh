@@ -43,6 +43,7 @@ if find package/feeds -type l -name tailscale -print -quit | grep -q .; then
 fi
 mkdir -p package/custom files
 cp -a "$recipes/." "$repo/packages/netdata" package/custom/
+"$repo/scripts/prepare-technitium-luci.sh" package/custom/luci-app-technitium
 cp -a "$repo/sources/full/files/." files/
 cp -a "$repo/image-files/network-ui/usr" "$repo/image-files/network-ui/www" files/
 
@@ -80,7 +81,7 @@ done
 for name in luci-nftables-legacy-warning luci-filemanager-layout; do
     git -C feeds/luci apply "$patches/$name.patch"
 done
-git -C feeds/packages apply "$patches/golang-1.27.4.patch" "$patches/docker-verified-release-revisions.patch" "$patches/ttyd-luci-session.patch"
+git -C feeds/packages apply "$patches/golang-1.27.4.patch" "$patches/ttyd-luci-session.patch"
 release=26.288.56989~75a306d
 for module in modules/luci-mod-status applications/luci-app-filemanager; do
     sed -i "s|^include ../../luci.mk|PKG_VERSION:=$release\\nPKG_RELEASE:=1\\n\\ninclude ../../luci.mk|" "feeds/luci/$module/Makefile"
@@ -96,6 +97,13 @@ grep -Fx 'CONFIG_GRUB_BOOTOPTS="ipv6.disable=1"' .config
 grep -Fx '# CONFIG_PACKAGE_dnsmasq_full_dhcpv6 is not set' .config
 grep -Fx CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn=y .config
 grep -Fx CONFIG_PACKAGE_kmod-bonding=y .config
+for package in technitium luci-app-technitium luci-i18n-technitium-zh-cn adguardhome luci-app-adguardhome; do
+    grep -Fx "CONFIG_PACKAGE_${package}=y" .config
+done
+if grep -E '^CONFIG_PACKAGE_(docker|dockerd|docker-compose|containerd|runc|tini|luci-app-dockerman|luci-i18n-dockerman-[^=]*)=y$' .config; then
+    echo 'A Docker package remains enabled' >&2
+    exit 1
+fi
 jobs="${OPENWRT_JOBS:-$(nproc)}"
 export GOPROXY='https://proxy.golang.org|direct'
 make -j"$jobs" download
@@ -117,6 +125,17 @@ def versions(path):
 old, new = map(versions, sys.argv[1:3])
 old["kmod-bonding"] = old["kmod-macvlan"]
 old["ttyd"] = "1.7.7-r3"
+for name in ("docker", "dockerd", "docker-compose", "containerd", "runc", "tini",
+             "luci-app-dockerman", "luci-i18n-dockerman-zh-cn"):
+    old.pop(name, None)
+    if name in new:
+        raise SystemExit(f"Unexpected Docker package: {name}")
+for name, version in {"technitium": "15.6.2-r1", "luci-app-technitium": "1.0.0-r1",
+                      "luci-i18n-technitium-zh-cn": "1.0.0-r1"}.items():
+    if name == "luci-i18n-technitium-zh-cn" and new.get(name):
+        # LuCI gives translation packages their own source-derived version.
+        version = new[name]
+    old[name] = version
 kernel_release = r"(\d+\.\d+\.\d+)~[a-f0-9]{32}(-r\d+)"
 old_kernel, new_kernel = (re.fullmatch(kernel_release, packages["kernel"]) for packages in (old, new))
 if not old_kernel or not new_kernel or old_kernel.groups() != new_kernel.groups():

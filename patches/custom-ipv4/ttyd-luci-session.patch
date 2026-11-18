@@ -330,9 +330,9 @@ index 0000000..b175330
 ++    server->check_origin = true;
 ++  }
 ++
-+   lws_set_log_level(debug_level, NULL);
++   openlog("ttyd", LOG_NDELAY | LOG_PID, LOG_DAEMON);
++   lws_set_log_level(debug_level, lwsl_emit_syslog);
 + 
-+   char server_hdr[128] = "";
 +@@ -560,7 +579,11 @@ int main(int argc, char **argv) {
 +       info.ssl_ca_filepath = ca_path;
 +       info.options |= LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;

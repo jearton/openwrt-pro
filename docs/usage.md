@@ -5,7 +5,7 @@
 从独立实验 LAN 打开 LuCI，完成密码设置。可用仅绑定管理机回环的 SSH 转发访问 LuCI 和 Netdata，Mac 用于后台管理。使用隔离客户端验证 DNS、网关和代理的数据面。
 
 - **系统 → 实时监控** 查看主机指标和容器网络流量。
-- **服务 → 容器管理** 查看 Docker 网络和 DNS 容器。Docker 数据目录放在支持 OverlayFS 的持久文件系统上。
+- **服务 → Technitium DNS** 查看服务状态和开机启动设置，打开独立的 DNS 控制台。详见 [DNS 使用文档](technitium.md)。
 - **网络 → DHCP/DNS** 管理 dnsmasq 的 DHCP 和租约 DNS。AdGuard Home 作为 LAN DNS 时，由 DHCP 选项 6 下发它的 IPv4 地址。
 - **系统 → 备份与升级** 保存配置和升级。实验环境保留旧启动盘。
 

@@ -10,8 +10,8 @@
 | 系统 → 终端 | [ttyd](https://github.com/tsl0922/ttyd) | 仅监听 LAN 的 Web 终端，复用有终端写权限的 LuCI 会话 |
 | 系统 → 文件管理、文件传输、磁盘管理、分区扩容 | LuCI File Manager、FileTransfer、[DiskMan](https://github.com/sbwml/luci-app-diskman)、[PartExp](https://github.com/sirpdboy/luci-app-partexp) | 本机系统维护 |
 | 系统 → 定时重启、关机、自定义命令 | Autoreboot、PoweroffDevice、LuCI Commands | 管理操作 |
-| 服务 → 容器管理 | Docker 29.6.1、Dockerman | 管理容器、镜像、网络和卷 |
-| 服务 → AdGuard Home | [AdGuard Home 0.107.79](https://github.com/AdguardTeam/AdGuardHome) | 客户端 DNS 和过滤，按域名分流 |
+| 服务 → Technitium DNS | [Technitium 15.6.2](https://github.com/TechnitiumSoftware/DnsServer) · [控制台 1.4.2](https://github.com/byGarcia/technitium-console) · [LuCI 插件](https://github.com/jearton/luci-app-technitium) | 主 DNS、域名区域、广告过滤和查询统计 |
+| 服务 → AdGuard Home | [AdGuard Home 0.107.79](https://github.com/AdguardTeam/AdGuardHome) | 可选 DNS 过滤，随镜像提供，默认停用 |
 | 容器管理 → Technitium | [Technitium DNS Server 15.6.2](https://github.com/TechnitiumSoftware/DnsServer) | 按需部署的本地权威 DNS 容器 |
 | 服务 → OpenClash | [OpenClash](https://github.com/vernesong/OpenClash)、[Mihomo 1.19.34](https://github.com/MetaCubeX/mihomo) | 基于规则的代理分流 |
 | 服务 → DDNS-GO | [DDNS-GO 6.17.8](https://github.com/jeessy2/ddns-go) | 动态 DNS |

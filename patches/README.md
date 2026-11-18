@@ -7,7 +7,8 @@
 | Netdata | [配置权限](custom-ipv4/netdata-config-readable.patch)、[容器网卡采集](custom-ipv4/netdata-container-network.patch)、[LuCI 本地仪表盘](custom-ipv4/netdata-luci-bundled-dashboard.patch) |
 | ttyd | [LAN 监听、LuCI 会话和 WebSocket 权限校验](custom-ipv4/ttyd-luci-session.patch) |
 | LuCI | [iptables 后端识别](custom-ipv4/luci-nftables-legacy-warning.patch)、[文件管理样式](custom-ipv4/luci-filemanager-layout.patch) |
-| Docker、Tailscale | [Docker 版本合规](custom-ipv4/docker-verified-release-revisions.patch)、[Tailscale 文件归属](custom-ipv4/tailscale-file-ownership.patch) |
+| Tailscale | [Tailscale 文件归属](custom-ipv4/tailscale-file-ownership.patch) |
+| Technitium | [原生打包与首启](../sources/full/package/custom/technitium) · [LAN DNS 和防火墙默认值](../sources/full/files/etc/uci-defaults/93-technitium-dns) |
 | OpenClash、DDNS-GO、Go | [Mihomo 配方](custom-ipv4/openclash-mihomo.Makefile)、[DDNS-GO 版本](custom-ipv4/ddns-go-6.17.8.patch)、[Go 版本](custom-ipv4/golang-1.27.4.patch) |
 | 负载均衡、限速 | [mwan3 构建依赖](custom-ipv4/mwan3-build-dependency.patch)、[EQoS x86](custom-ipv4/eqos-x86.patch)、[EQoS Plus Bash](custom-ipv4/eqosplus-bash.patch) |
 | 工具 | [Arpbind](custom-ipv4/arpbind-pinned-luci-include.patch)、[Autoreboot](custom-ipv4/autoreboot-pinned-luci-include.patch)、[FileTransfer LuCI](custom-ipv4/filetransfer-pinned-luci-include.patch)、[FileTransfer APK](custom-ipv4/filetransfer-apk.patch)、[Ramfree](custom-ipv4/ramfree-pinned-luci-include.patch) |

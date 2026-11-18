@@ -4,7 +4,7 @@
 
 ## 从干净的构建树开始
 
-以下入口准备官方 OpenWrt 和 Netdata 定制配方，同时选择 Docker、Compose、AdGuard Home 和 LuCI。Netdata 包由 OpenWrt 构建系统从锁定并校验的上游资产生成。
+以下是旧版 Netdata 构建入口。完整候选固件用下节的 `scripts/build-full.sh`。Netdata 包由 OpenWrt 构建系统从锁定并校验的上游资产生成。
 
 ```sh
 ./scripts/prepare-openwrt.sh ./work/openwrt
@@ -19,9 +19,9 @@ make -j"$(nproc)" V=s
 
 [完整网络界面配置](../profiles/network-ui.config) 记录了验收镜像的包选择，[菜单清单](components.md) 给出对应功能和来源。完整配置需要先从来源锁中获取第三方源码，将对应配方加入 `package/custom/`，并处理项目补丁。用 `make defconfig` 后对照配置和 manifest 检查每个目标包。
 
-1. 在固定 OpenWrt 和 feeds 上依次准备 Argon、定制 LuCI、网络服务、VPN、Docker 和硬件相关模块。
+1. 在固定 OpenWrt 和 feeds 上依次准备 Argon、定制 LuCI、网络服务、VPN、原生 Technitium DNS 和硬件相关模块。
 2. Quickstart 页面及后端以 iStoreOS 25.12.6 2026110611 的发布资产为来源。使用 [提取脚本](../packages/istoreos-ui-2026110611/prepare-payload.py) 核验资产摘要，并按其 APK 文件归属提取。脚本参数依次为包含 `image.gz` 和解压得到的 `image.raw` 的目录、空输出目录和支持偏移量的 `unsquashfs` 路径。按上游许可管理这些发布文件。
-3. 应用[补丁索引](../patches/README.md)中对应的适配。将 image-files/network-ui 的 LuCI 运行文件作为 OpenWrt 的 files/ overlay，使用同一 LuCI 构建树的 po2lmo 编译菜单翻译，再构建 EFI 镜像。验收计划包括包版本、UEFI 启动、IPv6 禁用、LuCI、Docker 数据目录和 DNS 链路。
+3. 应用[补丁索引](../patches/README.md)中对应的适配。将 image-files/network-ui 的 LuCI 运行文件作为 OpenWrt 的 files/ overlay，使用同一 LuCI 构建树的 po2lmo 编译菜单翻译，再构建 EFI 镜像。验收计划包括包版本、UEFI 启动、IPv6 禁用、LuCI、Technitium 控制台和 DNS 链路。
 4. 对新镜像使用独立磁盘和测试客户端。备份配置并保留旧启动盘。确认旧盘的 LAN、WAN 和 IPv6 设置后再执行回退。
 
 完整网络界面配置的自动构建入口为 `scripts/build-full.sh`。GitHub Actions 使用 Ubuntu x86_64 runner 和同一脚本。脚本校验 Quickstart 资产，对照已发布的 APK 清单，要求完整构建额外包含 `kmod-bonding`，并验证每个内核模块的 ABI 与镜像内核一致。
@@ -42,7 +42,8 @@ make -j"$(nproc)" V=s
 | [LuCI 防火墙状态](../patches/custom-ipv4/luci-nftables-legacy-warning.patch) | 识别 iptables 的 nf_tables 后端，保留真正的 legacy 告警。 |
 | [LuCI 文件管理布局](../patches/custom-ipv4/luci-filemanager-layout.patch) | 文件路径栏和表格适应视口。 |
 | [Tailscale 文件归属](../patches/custom-ipv4/tailscale-file-ownership.patch) | 由 LuCI 插件提供服务和配置文件，避免重复归属。 |
-| [Docker 版本来源](../patches/custom-ipv4/docker-verified-release-revisions.patch) | 对照固定的 Docker、containerd 和 runc 发布提交。 |
+| [Technitium 原生配方](../sources/full/package/custom/technitium/Makefile) | 固定服务器、musl 运行时、控制台和 Advanced Forwarding 的版本和校验值。 |
+| [LuCI 来源锁定](../technitium-luci.lock.json) | 固定独立 Technitium 管理插件的提交。 |
 | [终端授权](../patches/custom-ipv4/ttyd-luci-session.patch) | ttyd 绑定 LAN，使用 rpcd 校验 LuCI 终端写权限，检查 WebSocket 来源，并定期校验已建立连接的会话。 |
 | [启动时配置](../sources/full/files/etc/uci-defaults/92-custom-ipv4) | 保留 Netdata 和 ttyd 的开机启动。 |
 

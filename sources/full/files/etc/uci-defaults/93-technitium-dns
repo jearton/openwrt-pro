@@ -1,0 +1,37 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+set -e
+
+uci batch <<'UCI'
+set dhcp.@dnsmasq[0].port=5353
+set openclash.config.enable_redirect_dns=0
+set firewall.technitium_aux=rule
+set firewall.technitium_aux.name='Reject internal resolver ports'
+set firewall.technitium_aux.src='*'
+set firewall.technitium_aux.proto='tcp udp'
+set firewall.technitium_aux.dest_port='5353 7874'
+set firewall.technitium_aux.target='REJECT'
+set firewall.technitium_wan=rule
+set firewall.technitium_wan.name='Reject Technitium on WAN'
+set firewall.technitium_wan.src='wan'
+set firewall.technitium_wan.proto='tcp udp'
+set firewall.technitium_wan.dest_port='53 5380'
+set firewall.technitium_wan.target='REJECT'
+UCI
+
+# dnsmasq does not announce DNS when it listens away from port 53.
+# Its 0.0.0.0 placeholder resolves to the DHCP-facing router address.
+if uci -q get dhcp.lan >/dev/null; then
+	has_dns=0
+	for option in $(uci -q get dhcp.lan.dhcp_option || true); do
+		case "$option" in 6,*|option:dns-server,*) has_dns=1 ;; esac
+	done
+	if [ "$has_dns" = 0 ]; then
+		uci add_list dhcp.lan.dhcp_option='6,0.0.0.0'
+	fi
+fi
+uci commit dhcp
+uci commit firewall
+uci commit openclash
+/etc/init.d/adguardhome disable
+/etc/init.d/technitium enable

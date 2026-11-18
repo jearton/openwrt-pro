@@ -1,0 +1,89 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-3.0-or-later
+set -eu
+umask 077
+
+base=/usr/lib/technitium
+state=/etc/technitium
+api_url=http://127.0.0.1:5380/api
+password_file="$state/setup-password"
+mkdir -p "$state/data"
+chmod 700 "$state" "$state/data"
+
+if [ ! -s "$state/data/auth.config" ] && [ ! -s "$password_file" ]; then
+	head -c 24 /dev/urandom | hexdump -v -e '1/1 "%02x"' > "$password_file"
+	test "$(wc -c < "$password_file")" -eq 48
+fi
+
+export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+export LD_LIBRARY_PATH="$base/dotnet"
+export DNS_SERVER_ADMIN_PASSWORD_FILE="$password_file"
+export DNS_SERVER_WEB_SERVICE_LOCAL_ADDRESSES=0.0.0.0
+export DNS_SERVER_WEB_SERVICE_WWW_FOLDER_PATH="$base/console"
+export DNS_SERVER_PREFER_IPV6=false
+export DNS_SERVER_RECURSION=AllowOnlyForPrivateNetworks
+export DNS_SERVER_LOG_FOLDER_PATH=/tmp/technitium-logs
+export DNS_SERVER_STATS_MAX_STAT_FILE_DAYS=30
+
+cd "$base/server"
+if [ -e "$state/provisioned" ]; then
+	exec "$base/dotnet/dotnet" "$base/server/DnsServerApp.dll" "$state/data"
+fi
+
+"$base/dotnet/dotnet" "$base/server/DnsServerApp.dll" "$state/data" &
+server_pid=$!
+trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" || true' EXIT
+trap 'exit 0' TERM INT
+
+for attempt in $(seq 1 25); do
+	if curl -fsS --max-time 1 "$api_url/../" >/dev/null 2>&1; then
+		break
+	fi
+	kill -0 "$server_pid"
+	sleep 1
+done
+
+response=$(curl -fsS --max-time 8 -G "$api_url/user/login" \
+	--data-urlencode user=admin --data-urlencode "pass@$password_file")
+token=$(printf '%s' "$response" | jsonfilter -e '@.token')
+test -n "$token" || { echo 'Technitium initialization login failed' >&2; exit 1; }
+
+api() {
+	local endpoint="$1"
+	shift
+	response=$(printf 'header = "Authorization: Bearer %s"\n' "$token" | \
+		curl -fsS --max-time 20 --config - "$api_url/$endpoint" "$@")
+	test "$(printf '%s' "$response" | jsonfilter -e '@.status')" = ok || {
+		printf 'Technitium initialization failed at %s\n' "$endpoint" >&2
+		return 1
+	}
+}
+
+api settings/set -G --data-urlencode dnsServerLocalEndPoints=0.0.0.0:53 \
+	--data-urlencode webServiceLocalAddresses=0.0.0.0 \
+	--data-urlencode forwarderProtocol=Https \
+	--data-urlencode 'forwarders=https://dns.alidns.com/dns-query (223.5.5.5)' \
+	--data-urlencode enableBlocking=true --data-urlencode preferIPv6=false \
+	--data-urlencode blockingType=NxDomain
+api zones/list
+if ! printf '%s' "$response" | jsonfilter -e '@.response.zones[*].name' | grep -qx lan; then
+	api zones/create -G --data-urlencode zone=lan --data-urlencode type=Forwarder \
+		--data-urlencode forwarderProtocol=Udp --data-urlencode forwarder=127.0.0.1:5353
+fi
+# The stock and lab LANs are /24. Other reverse zones can be added in the console.
+lan_ip=$(uci -q get network.lan.ipaddr || true)
+reverse_zone=$(printf '%s\n' "$lan_ip" | awk -F '[./]' 'NF >= 4 {print $3 "." $2 "." $1 ".in-addr.arpa"; exit}')
+if [ -n "$reverse_zone" ]; then
+	api zones/list
+	if ! printf '%s' "$response" | jsonfilter -e '@.response.zones[*].name' | grep -Fxq "$reverse_zone"; then
+		api zones/create -G --data-urlencode "zone=$reverse_zone" --data-urlencode type=Forwarder \
+			--data-urlencode forwarderProtocol=Udp --data-urlencode forwarder=127.0.0.1:5353
+	fi
+fi
+api apps/list
+if ! printf '%s' "$response" | jsonfilter -e '@.response.apps[*].name' | grep -qx 'Advanced Forwarding'; then
+	api 'apps/install?name=Advanced%20Forwarding' -F "file=@$base/AdvancedForwardingApp-v5.2.zip"
+fi
+api user/logout
+touch "$state/provisioned"
+wait "$server_pid"

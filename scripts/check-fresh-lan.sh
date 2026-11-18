@@ -25,6 +25,9 @@ lan+=,hostfwd=tcp:127.0.0.1:18080-192.168.1.1:80
 lan+=,hostfwd=tcp:127.0.0.1:18443-192.168.1.1:443
 lan+=,hostfwd=tcp:127.0.0.1:17681-192.168.1.1:7681
 lan+=,hostfwd=tcp:127.0.0.1:29999-192.168.1.1:19999
+lan+=,hostfwd=tcp:127.0.0.1:15380-192.168.1.1:5380
+lan+=,hostfwd=udp:127.0.0.1:10553-192.168.1.1:53
+lan+=,hostfwd=tcp:127.0.0.1:10553-192.168.1.1:53
 qemu-system-x86_64 -machine q35 -accel kvm -accel tcg -smp 2 -m 1024 \
     -display none -monitor none -serial "file:$test_dir/serial.log" \
     -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.fd \
@@ -50,10 +53,13 @@ until [[ $(status "$luci_http/cgi-bin/luci/" 2>/dev/null) = 403 ]] &&
     [[ $(status "$terminal_http" 2>/dev/null) = 403 ]] &&
     fetch 29999/v3/ "$test_dir/netdata.html" 2>/dev/null &&
     fetch 29999/api/v1/charts "$test_dir/charts.json" 2>/dev/null &&
-    jq -e '.charts["system.cpu"] != null' "$test_dir/charts.json" >/dev/null; do
+    jq -e '.charts["system.cpu"] != null' "$test_dir/charts.json" >/dev/null &&
+    fetch 15380/ "$test_dir/technitium.html" 2>/dev/null &&
+    grep -qi 'Technitium' "$test_dir/technitium.html" &&
+    [[ $(dig @127.0.0.1 -p 10553 openwrt.lan A +short +time=1 +tries=1) = 192.168.1.1 ]]; do
     kill -0 "$vm_pid"
     if (( SECONDS >= deadline )); then
-        echo 'Fresh LAN boot did not serve LuCI, ttyd and Netdata' >&2
+        echo 'Fresh LAN boot did not serve LuCI, ttyd, Netdata and native DNS' >&2
         exit 1
     fi
     sleep 3
@@ -65,6 +71,10 @@ login() {
 }
 
 login "$luci_http" "$test_dir/http.cookies"
+curl -kfsS --noproxy '*' -b "$test_dir/http.cookies"     "$luci_http/cgi-bin/luci/admin/services/technitium" -o "$test_dir/technitium-luci.html"
+grep -Eq 'technitium[./]status' "$test_dir/technitium-luci.html"
+[[ $(dig @127.0.0.1 -p 10553 openwrt.lan A +short +tcp +time=2 +tries=1) = 192.168.1.1 ]]
+[[ $(dig @127.0.0.1 -p 10553 -x 192.168.1.1 +short +time=2 +tries=1) = openwrt.lan. ]]
 login https://127.0.0.1:18443 "$test_dir/https.cookies"
 for scheme in http https; do
     cookie="$(awk -v name="sysauth_$scheme" '$6 == name { print $6 "=" $7 }' "$test_dir/$scheme.cookies")"
@@ -116,4 +126,4 @@ with closing(connect(cookie)) as terminal:
     else:
         raise AssertionError('LuCI session did not open a root shell')
 PY
-echo 'Fresh isolated IPv4 boot verified LuCI, Netdata, and authorized ttyd HTTP and WebSocket access'
+echo 'Fresh isolated IPv4 boot verified LuCI, Netdata, authorized ttyd, and the Technitium console and DNS on UDP/TCP'

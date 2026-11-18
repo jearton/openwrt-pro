@@ -18,7 +18,10 @@ jobs:
       - name: Check image manifest and Netdata patches
         run: |
           (cd manifests && sha256sum --strict --ignore-missing -c SHA256SUMS)
-          bash -n scripts/prepare-openwrt.sh scripts/verify-firmware.sh
+          bash -n scripts/prepare-openwrt.sh scripts/verify-firmware.sh scripts/build-full.sh scripts/prepare-technitium-luci.sh
+          sh -n sources/full/package/custom/technitium/files/run
+          sh -n sources/full/package/custom/technitium/files/technitium.init
+          sh -n sources/full/files/etc/uci-defaults/93-technitium-dns
           python3 - <<'PY'
           from pathlib import Path
           import json
