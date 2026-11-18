@@ -16,7 +16,7 @@ OpenWrt 完整镜像内置 Technitium DNS 15.6.2、ASP.NET Core 10.0.15 musl x86
 - OpenClash 默认停用，其 53 端口重定向保持关闭。需要 Fake-IP 时，在 Technitium 的 **Advanced Forwarding** 按客户端源 IP 划分组，只将代理白名单客户端需要 Fake-IP 的域名交给 `127.0.0.1:7874`。其他查询继续走真实 IP 上游。两处白名单使用相同的固定租约地址。
 - OpenClash 配置、订阅凭证、用户内网区域和设备白名单由管理员配置。
 
-修改 LAN 网段或 DHCP 域后，在控制台同步修改条件转发区和反向区。切换到备用 AdGuard Home 时，先在备用端口确认应答，再在维护窗口停 Technitium 并让 AdGuard Home 接管 LAN 的 53 端口。
+修改 LAN 网段或 DHCP 域后，在控制台同步修改条件转发区和反向区。 路由器重启后，动态租约名称随客户端重新取得租约而恢复。如果 dnsmasq 已能回答该名称，Technitium 仍显示 NXDOMAIN，可在控制台的 Cache 删除对应名称和 PTR 的缓存。切换到备用 AdGuard Home 时，先在备用端口确认应答，再在维护窗口停 Technitium 并让 AdGuard Home 接管 LAN 的 53 端口。
 
 ## 从旧镜像升级
 
