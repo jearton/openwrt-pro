@@ -130,7 +130,7 @@ for name in ("docker", "dockerd", "docker-compose", "containerd", "runc", "tini"
     old.pop(name, None)
     if name in new:
         raise SystemExit(f"Unexpected Docker package: {name}")
-for name, version in {"technitium": "15.6.2-r1", "luci-app-technitium": "1.0.1-r1",
+for name, version in {"technitium": "15.6.2-r1", "luci-app-technitium": "1.0.2-r1",
                       "luci-i18n-technitium-zh-cn": "1.0.0-r1"}.items():
     if name == "luci-i18n-technitium-zh-cn" and new.get(name):
         # LuCI gives translation packages their own source-derived version.
