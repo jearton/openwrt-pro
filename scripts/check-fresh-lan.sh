@@ -6,6 +6,13 @@ test_dir=$(mktemp -d)
 vm_pid=
 cleanup() {
     status=$?
+    if [[ $status != 0 && -n $vm_pid ]]; then
+        for endpoint in 18080/cgi-bin/luci/ 17681/cgi-bin/luci/terminal-session/ 29999/v3/ 29999/api/v1/charts 15380/; do
+            code=$(curl -ksS --noproxy '*' --connect-timeout 1 --max-time 2 -o /dev/null -w '%{http_code}' "http://127.0.0.1:$endpoint" 2>/dev/null || true)
+            printf 'Guest endpoint %s returned HTTP %s\n' "$endpoint" "$code"
+        done
+        dig @127.0.0.1 -p 10553 openwrt.lan A +short +time=1 +tries=1 || true
+    fi
     if [[ -n $vm_pid ]]; then
         kill "$vm_pid" 2>/dev/null || :
         wait "$vm_pid" 2>/dev/null || :

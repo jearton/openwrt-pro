@@ -19,7 +19,7 @@ jobs:
         run: |
           (cd manifests && sha256sum --strict --ignore-missing -c SHA256SUMS)
           bash -n scripts/prepare-openwrt.sh scripts/verify-firmware.sh scripts/build-full.sh scripts/prepare-technitium-luci.sh
-          sh -n sources/full/files/etc/uci-defaults/93-technitium-dns sources/full/files/etc/uci-defaults/94-technitium-provision
+          sh -n sources/full/files/etc/uci-defaults/93-technitium-dns sources/full/files/etc/init.d/technitium-provision sources/full/files/usr/libexec/technitium-provision
           python3 - <<'PY'
           from pathlib import Path
           import json
