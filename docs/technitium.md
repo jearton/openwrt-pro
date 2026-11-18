@@ -2,6 +2,8 @@
 
 OpenWrt 完整镜像内置 Technitium DNS 15.6.2、ASP.NET Core 10.0.15 musl x86/64 运行时、technitium-console 1.4.2 和 Advanced Forwarding 5.2，由 procd 启动。AdGuard Home 和它的 LuCI 菜单作为备用预装，默认停用。
 
+后台和 LuCI 插件统一来自 [luci-app-technitium](https://github.com/jearton/luci-app-technitium)，源码提交固定在 `technitium-luci.lock.json`。通用包首次安装默认停止且关闭开机启动，本固件通过 `93-technitium-dns` 显式开启，并由 `94-technitium-provision` 配置 DNS 分流、租约名转发和 Advanced Forwarding。软件包升级保留既有启停状态和数据。
+
 ## 第一次登录
 
 进入 **服务 → Technitium DNS**，确认服务已运行，打开控制台。控制台监听 TCP 5380，使用自己的管理员账户。用户名为 `admin`，通过已受保护的 SSH 管理连接读取 `/etc/technitium/setup-password`。登录后更改密码，删除一次性密码文件。Technitium 配置保存在 `/etc/technitium/data`，位于系统配置备份范围内。

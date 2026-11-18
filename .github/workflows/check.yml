@@ -19,9 +19,7 @@ jobs:
         run: |
           (cd manifests && sha256sum --strict --ignore-missing -c SHA256SUMS)
           bash -n scripts/prepare-openwrt.sh scripts/verify-firmware.sh scripts/build-full.sh scripts/prepare-technitium-luci.sh
-          sh -n sources/full/package/custom/technitium/files/run
-          sh -n sources/full/package/custom/technitium/files/technitium.init
-          sh -n sources/full/files/etc/uci-defaults/93-technitium-dns
+          sh -n sources/full/files/etc/uci-defaults/93-technitium-dns sources/full/files/etc/uci-defaults/94-technitium-provision
           python3 - <<'PY'
           from pathlib import Path
           import json
@@ -45,6 +43,14 @@ jobs:
               for script in ("extract-asset.sh", "files/netdata.init"):
                   subprocess.run(["sh", "-n", str(tree / "package/custom/netdata" / script)], check=True)
           PY
+      - name: Check the pinned standalone Technitium packages
+        run: |
+          packages=$(mktemp -d)
+          scripts/prepare-technitium-luci.sh "$packages"
+          sh -n "$packages/technitium/files/run" "$packages/technitium/files/technitium.init"
+          node --check "$packages/luci-app-technitium/htdocs/luci-static/resources/view/technitium/status.js"
+          grep -Fx 'PKG_RELEASE:=2' "$packages/technitium/Makefile"
+          grep -Fx 'PKG_VERSION:=1.1.0' "$packages/luci-app-technitium/Makefile"
       - name: Check Technitium loopback ports
         run: |
           docker compose -f containers/technitium/compose.yaml config --format json |

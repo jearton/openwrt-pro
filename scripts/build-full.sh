@@ -43,7 +43,7 @@ if find package/feeds -type l -name tailscale -print -quit | grep -q .; then
 fi
 mkdir -p package/custom files
 cp -a "$recipes/." "$repo/packages/netdata" package/custom/
-"$repo/scripts/prepare-technitium-luci.sh" package/custom/luci-app-technitium
+"$repo/scripts/prepare-technitium-luci.sh" package/custom
 cp -a "$repo/sources/full/files/." files/
 cp -a "$repo/image-files/network-ui/usr" "$repo/image-files/network-ui/www" files/
 
@@ -130,7 +130,7 @@ for name in ("docker", "dockerd", "docker-compose", "containerd", "runc", "tini"
     old.pop(name, None)
     if name in new:
         raise SystemExit(f"Unexpected Docker package: {name}")
-for name, version in {"technitium": "15.6.2-r1", "luci-app-technitium": "1.0.2-r1",
+for name, version in {"technitium": "15.6.2-r2", "luci-app-technitium": "1.1.0-r1",
                       "luci-i18n-technitium-zh-cn": "1.0.0-r1"}.items():
     if name == "luci-i18n-technitium-zh-cn" and new.get(name):
         # LuCI gives translation packages their own source-derived version.

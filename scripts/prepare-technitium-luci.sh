@@ -14,7 +14,11 @@ PY
 work=$(mktemp -d)
 trap 'rm -rf -- "$work"' EXIT
 git init -q "$work"
-git -C "$work" fetch --depth 1 "${source[0]}" "${source[1]}"
+git -c http.version=HTTP/1.1 -C "$work" fetch --depth 1 "${source[0]}" "${source[1]}"
 test "$(git -C "$work" rev-parse FETCH_HEAD)" = "${source[1]}"
 mkdir -p -- "$destination"
-git -C "$work" archive FETCH_HEAD | tar -x -C "$destination"
+git -C "$work" archive FETCH_HEAD | tar -x -C "$work"
+for package in technitium luci-app-technitium; do
+    test ! -e "$destination/$package"
+    cp -a "$work/$package" "$destination/"
+done
