@@ -5,7 +5,7 @@
 | 组件 | 补丁 |
 | --- | --- |
 | Netdata | [配置权限](custom-ipv4/netdata-config-readable.patch)、[容器网卡采集](custom-ipv4/netdata-container-network.patch)、[LuCI 本地仪表盘和「实时监控」标题](custom-ipv4/netdata-luci-bundled-dashboard.patch)；LuCI 包 0.1-r1 同步页面标题及中文翻译 |
-| ttyd | [LAN 监听、LuCI 会话、WebSocket 权限校验和 DER/PEM 证书适配](custom-ipv4/ttyd-luci-session.patch)；r5 保留 r4 的证书适配，新增每次系统登录及空密码拒绝；[配置迁移](../sources/full/files/etc/uci-defaults/93-ttyd-luci-session)；[LuCI 协议适配与自适应终端高度](../image-files/network-ui/www/luci-static/resources/view/ttyd/term.js) |
+| ttyd | [LAN 监听、LuCI 会话、WebSocket 权限校验和 DER/PEM 证书适配](custom-ipv4/ttyd-luci-session.patch)；r6 保留证书适配、每次系统登录及空密码拒绝；LuCI TLS 监听仅协商 HTTP/1.1，避开 Chrome HTTP/2 WebSocket 的 Origin 误拒绝；[配置迁移](../sources/full/files/etc/uci-defaults/93-ttyd-luci-session)；[LuCI 协议适配与自适应终端高度](../image-files/network-ui/www/luci-static/resources/view/ttyd/term.js) |
 | LuCI | [iptables 后端识别](custom-ipv4/luci-nftables-legacy-warning.patch)、[文件管理样式](custom-ipv4/luci-filemanager-layout.patch) |
 | Tailscale | [Tailscale 文件归属](custom-ipv4/tailscale-file-ownership.patch) |
 | Technitium | [独立原生包与 LuCI 项目](https://github.com/jearton/luci-app-technitium) · [固定源码提交](../technitium-luci.lock.json) · [固件首启策略](../sources/full/files/usr/libexec/technitium-provision) · [LAN DNS 和防火墙默认值](../sources/full/files/etc/uci-defaults/93-technitium-dns) |

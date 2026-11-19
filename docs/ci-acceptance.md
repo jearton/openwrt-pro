@@ -92,3 +92,12 @@ scripts/check-rootfs-permissions.py 在打包后直接检查 squashfs 元数据�
 ## 回滚
 
 固件或配置修复未通过时不提升为正式发布，保留已有 Release 和 SHA256。源码可用新的 revert 提交回退；不要替换已有发布镜像的内容。每次修复均以新构建和新临时磁盘重新验收。
+
+
+## Mac Chrome 的 HTTPS 终端与 HTTP/2
+
+2026-11-20，r5 完整镜像全新安装到 9000 后，Mac Chrome 的 HTTP 终端通过每次系统登录及窗口高度检查，HTTPS 页面却没有显示登录提示。CDP 报告 ERR_HTTP2_PROTOCOL_ERROR，ttyd 日志显示 Origin 被拒绝；同一 HTTPS 会话使用 HTTP/1.1 WebSocket 能取得登录提示。这与 [ttyd 上游问题 #1566](https://github.com/tsl0922/ttyd/issues/1566) 一致：Origin 检查读取 Host，而 HTTP/2 使用 :authority。
+
+r6 只在 LuCI 授权的 TLS 监听设置 ALPN 为 http/1.1，保留来源、LuCI 会话和系统登录三项检查。使用 libwebsockets 的 [alpn 字段](https://libwebsockets.org/lws-api-doc-v4.0-stable/html/structlws__context__creation__info.html)，不要求用户关闭 Chrome 的 HTTP/2。完整镜像 CI 新增 TLS 协商检查，客户端同时提供 h2 和 http/1.1 时必须选中 http/1.1。历史镜像初始化 fixture 不替换 ttyd 二进制，故不以该 fixture 代替此检查。
+
+失败的 r5 完整镜像不作为正式发布；待 r6 全新镜像重新完成浏览器与 DNS 验收后记录最终结果。

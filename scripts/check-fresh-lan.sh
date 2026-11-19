@@ -121,6 +121,12 @@ grep -Eq 'technitium[./]status' "$test_dir/technitium-luci.html"
 [[ $(dig @192.168.1.1 openwrt.lan A +short +tcp +time=2 +tries=1) = 192.168.1.1 ]]
 [[ $(dig @192.168.1.1 -x 192.168.1.1 +short +time=2 +tries=1) = openwrt.lan. ]]
 login https://192.168.1.1 "$test_dir/https.cookies"
+# The old-image fixture cannot replace ttyd's binary. Check ALPN on exact builds.
+if [[ -z ${FRESH_LAN_FIXTURE_APKS:-} ]]; then
+    timeout 8 openssl s_client -connect 192.168.1.1:7681 -alpn h2,http/1.1 \
+        </dev/null > "$test_dir/ttyd-alpn.txt" 2>&1
+    grep -q 'ALPN protocol: http/1.1' "$test_dir/ttyd-alpn.txt"
+fi
 for scheme in http https; do
     cookie="$(awk -v name="sysauth_$scheme" '$6 == name { print $6 "=" $7 }' "$test_dir/$scheme.cookies")"
     test -n "$cookie"

@@ -7,7 +7,7 @@ index c6733c4..8f3edd8 100644
  PKG_NAME:=ttyd
  PKG_VERSION:=1.7.7
 -PKG_RELEASE:=1
-+PKG_RELEASE:=5
++PKG_RELEASE:=6
  
  PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
  PKG_SOURCE_URL:=https://codeload.github.com/tsl0922/ttyd/tar.gz/$(PKG_VERSION)?
@@ -171,7 +171,7 @@ new file mode 100644
 index 0000000..80a805d
 --- /dev/null
 +++ b/utils/ttyd/patches/200-luci-session-auth.patch
-@@ -0,0 +1,259 @@
+@@ -0,0 +1,262 @@
 +diff --git a/CMakeLists.txt b/CMakeLists.txt
 +index 1eab7c7..d70adf7 100644
 +--- a/CMakeLists.txt
@@ -394,11 +394,14 @@ index 0000000..80a805d
 +   openlog("ttyd", LOG_NDELAY | LOG_PID, LOG_DAEMON);
 +   lws_set_log_level(debug_level, lwsl_emit_syslog);
 + 
-+@@ -560,7 +579,11 @@ int main(int argc, char **argv) {
++@@ -560,7 +579,14 @@ int main(int argc, char **argv) {
 +       info.ssl_ca_filepath = ca_path;
 +       info.options |= LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;
 +     }
 +-    info.options |= LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT | LWS_SERVER_OPTION_REDIRECT_HTTP_TO_HTTPS;
+++    // ttyd's Origin check reads Host, which HTTP/2 CONNECT does not provide.
+++    if (server->luci_auth)
+++      info.alpn = "http/1.1";
 ++    info.options |= LWS_SERVER_OPTION_ALLOW_NON_SSL_ON_SSL_PORT;
 ++    if (server->luci_auth && luci_allow_http)
 ++      info.options |= LWS_SERVER_OPTION_ALLOW_HTTP_ON_HTTPS_LISTENER;
