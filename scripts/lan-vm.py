@@ -5,6 +5,7 @@
 from pathlib import Path
 import re
 import secrets
+import select
 import socket
 import subprocess
 import sys
@@ -36,9 +37,15 @@ class Guest:
         subprocess.run(["scp", "-O", *options, *map(str, files),
                         "root@192.168.1.1:/tmp/technitium-test/"], check=True, timeout=120)
 
-    def wait(self, previous_boot=None):
-        deadline = time.monotonic() + 150
+    def wait(self, previous_boot=None, serial=None):
+        deadline = time.monotonic() + 300
         while time.monotonic() < deadline:
+            # A connected, unread QEMU serial socket can stall console writes
+            # during boot. Keep draining it while waiting for LAN SSH readiness.
+            if serial is not None:
+                while select.select([serial], [], [], 0)[0]:
+                    if not serial.recv(65536):
+                        raise RuntimeError("The VM closed its serial console")
             try:
                 boot = self.run("cat /proc/sys/kernel/random/boot_id", timeout=5).strip()
                 if previous_boot is None or previous_boot != boot:
@@ -86,7 +93,7 @@ def bootstrap(directory):
                 serial.sendall(command.encode())
                 sent = True
             if b"BOOTSTRAP-READY" in output:
-                Guest(directory).wait()
+                Guest(directory).wait(serial=serial)
                 return
     raise RuntimeError("Unable to bootstrap the disposable VM console")
 

@@ -101,3 +101,8 @@ scripts/check-rootfs-permissions.py 在打包后直接检查 squashfs 元数据�
 r6 只在 LuCI 授权的 TLS 监听设置 ALPN 为 http/1.1，保留来源、LuCI 会话和系统登录三项检查。使用 libwebsockets 的 [alpn 字段](https://libwebsockets.org/lws-api-doc-v4.0-stable/html/structlws__context__creation__info.html)，不要求用户关闭 Chrome 的 HTTP/2。完整镜像 CI 新增 TLS 协商检查，客户端同时提供 h2 和 http/1.1 时必须选中 http/1.1。历史镜像初始化 fixture 不替换 ttyd 二进制，故不以该 fixture 代替此检查。
 
 失败的 r5 完整镜像不作为正式发布。r6 完整镜像已在全新磁盘通过 Mac Chrome HTTP/HTTPS 终端、Netdata、Console、9001 DNS 和重启验收；最终 SHA256、截图与检查边界见[正式验收记录](acceptance-20261120.md)。
+
+
+## CI 旧镜像 fixture 的 SSH 启动等待
+
+2026-11-20 的 [44575439069](https://github.com/jearton/openwrt-pro/actions/runs/44575439069) 在旧镜像 bootstrap 等待 SSH 时超时，尚未进入新包安装和断言阶段；不能将该结果标记为新固件功能验收失败或成功。排障输出随后能取得 DNS 答案和 Netdata/Console HTTP 响应。bootstrap 原先持有串口 socket 却停止读取，再等待 SSH 150 秒。等待器改为持续排空串口，并给无硬件加速的冷启动 300 秒上限。新镜像的 Mac/PVE/9001 验收结果独立记录，不用 fixture 结果替代。
