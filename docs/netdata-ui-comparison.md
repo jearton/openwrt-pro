@@ -27,3 +27,5 @@ Bleach 作者的[公开仓库](https://github.com/bleach1991/lede)当前主分�
 [muink/luci-app-netdata](https://github.com/muink/luci-app-netdata)于 2026-01-11 归档。其 [main.js](https://github.com/muink/luci-app-netdata/blob/master/htdocs/luci-static/resources/view/netdata/main.js)也是嵌入 Netdata 网页，并未自行绘制经典 dashboard；它另有启停、端口、SSL、Nginx 及主配置文件编辑页面。当前 ImmortalWrt 入口只嵌入仪表盘，这些管理选项确实存在差异，不能称两套插件功能完全相同。
 
 [ImmortalWrt 主仓库仍提供 JS 入口](https://github.com/immortalwrt/luci/blob/master/applications/luci-app-netdata/htdocs/luci-static/resources/view/netdata.js)，不必因为 muink 仓库归档就重写整个插件。[Netdata 官方界面说明](https://learn.netdata.cloud/docs/dashboards-and-charts/tabs/metrics)也确认新版仍有预置的单节点 CPU、内存、磁盘及网络概览。因此「没有任何预置 dashboard」不准确；当前要解决的是默认呈现方式及软路由常用图表布局。当前打包版本可用的具体默认入口仍须浏览器验证。
+
+2026-11-20 已用 Mac Chrome 的全新浏览器会话只读检查实验机 Netdata 2.12.3 的 /v3/：无需云登录即可看到 CPU、内存、磁盘读写、网络收发预置概览和实时曲线。此检查使用当时已运行的实验机服务，不代表后续新镜像的完整验收已完成，也没有新增或保存自定义 dashboard。
