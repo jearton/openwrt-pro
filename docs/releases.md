@@ -13,6 +13,13 @@ sha256sum -c SHA256SUMS
 
 本次镜像由 189 Linux 构建并在独立虚拟机重新安装，发布工作流负责附件及 GHCR 的 SHA256 回拉校验。完整源码 CI 构建是单独的流程；它的运行状态不等同于本次原生构建验收结果。[验收记录与截图](acceptance-20261120.md)。
 
+
+本版[发布任务已成功](https://github.com/jearton/openwrt-pro/actions/runs/44578122539)，已按摘要拉回全部附件并核验；匿名读取 GHCR 也已核对同一镜像和清单。不可变引用：
+
+```sh
+oras pull ghcr.io/jearton/openwrt-pro/firmware@sha256:3bccca069bf973b0e3354eb7c5046da21fd7a295d920386158b301632e2cb49c
+```
+
 ## 持续集成
 
 推送到 main 或创建 PR 后，GitHub Actions 检查清单摘要、Netdata 补丁和 Compose 的回环端口映射。发布工作流下载对应 GitHub Release 的三个文件，用 Git tag 上的清单核对 SHA-256，检测 gzip 完整性，发布为 GHCR 同名版本，再按 OCI 摘要拉回核验。工作流摘要记录可直接使用的摘要引用。
