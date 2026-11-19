@@ -1,5 +1,5 @@
 diff --git a/utils/ttyd/Makefile b/utils/ttyd/Makefile
-index c6733c4..983f81d 100644
+index c6733c4..8f3edd8 100644
 --- a/utils/ttyd/Makefile
 +++ b/utils/ttyd/Makefile
 @@ -9,7 +9,7 @@ include $(TOPDIR)/rules.mk
@@ -7,7 +7,7 @@ index c6733c4..983f81d 100644
  PKG_NAME:=ttyd
  PKG_VERSION:=1.7.7
 -PKG_RELEASE:=1
-+PKG_RELEASE:=3
++PKG_RELEASE:=4
  
  PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
  PKG_SOURCE_URL:=https://codeload.github.com/tsl0922/ttyd/tar.gz/$(PKG_VERSION)?
@@ -16,7 +16,7 @@ index c6733c4..983f81d 100644
  	CATEGORY:=Utilities
  	TITLE:=Command-line tool for sharing terminal over the web
 -	DEPENDS:=+libcap +libopenssl +libjson-c +libuv +zlib +libwebsockets-full
-+	DEPENDS:=+libcap +libopenssl +libjson-c +libubus +libubox +libuv +zlib +libwebsockets-full
++	DEPENDS:=+libcap +libopenssl +libjson-c +libubus +libubox +openssl-util +libuv +zlib +libwebsockets-full
  	URL:=https://github.com/tsl0922/ttyd
  	SUBMENU:=Terminal
  endef
@@ -34,7 +34,7 @@ index 8dbde70..e9bb2da 100644
 +	option command '/bin/ash -l'
  
 diff --git a/utils/ttyd/files/ttyd.init b/utils/ttyd/files/ttyd.init
-index 7e24aea..bf8e3ea 100644
+index 7e24aea..57407b3 100644
 --- a/utils/ttyd/files/ttyd.init
 +++ b/utils/ttyd/files/ttyd.init
 @@ -22,6 +22,7 @@ validate_section_ttyd()
@@ -45,7 +45,33 @@ index 7e24aea..bf8e3ea 100644
  		'max_clients:uinteger' \
  		'once:bool' \
  		'index:string' \
-@@ -47,9 +48,9 @@ ttyd_instance()
+@@ -34,6 +35,25 @@ validate_section_ttyd()
+ 		'command:string'
+ }
+ 
++
++# uHTTPd creates DER certificates; libwebsockets expects PEM files.
++# Normalize into a private runtime directory and leave configured originals intact.
++luci_tls_pem() {
++	local source_cert="$1" source_key="$2" instance="$3"
++	local directory=/var/run/ttyd-luci
++	local prefix="$directory/$instance"
++	(
++		umask 077
++		mkdir -p "$directory" && chmod 700 "$directory" || exit 1
++		trap 'rm -f "$prefix.crt.new" "$prefix.key.new"' EXIT
++		openssl x509 -in "$source_cert" -out "$prefix.crt.new" 2>/dev/null ||
++			openssl x509 -inform DER -in "$source_cert" -out "$prefix.crt.new" || exit 1
++		openssl pkey -in "$source_key" -passin pass: -out "$prefix.key.new" 2>/dev/null ||
++			openssl pkey -inform DER -in "$source_key" -passin pass: -out "$prefix.key.new" || exit 1
++		mv "$prefix.crt.new" "$prefix.crt" && mv "$prefix.key.new" "$prefix.key" || exit 1
++	)
++}
++
+ ttyd_instance()
+ {
+ 	[ "$2" = 0 ] || {
+@@ -47,9 +67,9 @@ ttyd_instance()
  	[ "${interface::1}" = @ ] && {
  		interface=$(
  			. /lib/functions/network.sh
@@ -57,11 +83,11 @@ index 7e24aea..bf8e3ea 100644
  	}
  
  	[ "$url_arg" = 0 ] && url_arg=""
-@@ -59,6 +60,24 @@ ttyd_instance()
+@@ -59,6 +79,34 @@ ttyd_instance()
  	[ "$ipv6" = 0 ] && ipv6=""
  	[ "$ssl" = 0 ] && ssl=""
  
-+	local cert key allow_http
++	local cert key allow_http source_cert source_key
 +	if [ "$luci_auth" = 1 ] && [ -z "$ssl" ]; then
 +		local listen_http listen_https redirect
 +		listen_http="$(uci -q get uhttpd.main.listen_http)"
@@ -77,12 +103,22 @@ index 7e24aea..bf8e3ea 100644
 +			fi
 +		fi
 +		[ -n "$cert" ] || [ "$allow_http" = 1 ] || return 1
++		if [ -n "$cert" ]; then
++			source_cert="$cert"
++			source_key="$key"
++			luci_tls_pem "$cert" "$key" "$1" || {
++				logger -t ttyd 'Cannot prepare the LuCI TLS certificate and key'
++				return 1
++			}
++			cert="/var/run/ttyd-luci/$1.crt"
++			key="/var/run/ttyd-luci/$1.key"
++		fi
 +	fi
 +
  	procd_open_instance
  	procd_set_param command "$PROG" \
  		${port:+-p $port} \
-@@ -80,6 +99,14 @@ ttyd_instance()
+@@ -80,6 +128,14 @@ ttyd_instance()
  		${ssl_key:+-K $ssl_key} \
  		${ssl_ca:+-A $ssl_ca} \
  		${debug:+-d $debug}
@@ -90,14 +126,14 @@ index 7e24aea..bf8e3ea 100644
 +		procd_append_param command --luci-auth -b /cgi-bin/luci/terminal-session
 +		if [ -n "$cert" ]; then
 +			procd_append_param command -S -C "$cert" -K "$key"
-+			procd_set_param file "$cert" "$key"
++			procd_set_param file "$source_cert" "$source_key"
 +			[ "$allow_http" = 1 ] && procd_append_param command --luci-allow-http
 +		fi
 +	fi
  	config_list_foreach "$1" client_option "procd_append_param command -t"
  	procd_append_param command $command
  	procd_set_param stdout 1
-@@ -98,5 +125,6 @@ shutdown() {
+@@ -98,5 +154,6 @@ shutdown() {
  }
  
  service_triggers() {
@@ -107,7 +143,7 @@ index 7e24aea..bf8e3ea 100644
  }
 diff --git a/utils/ttyd/patches/200-luci-session-auth.patch b/utils/ttyd/patches/200-luci-session-auth.patch
 new file mode 100644
-index 0000000..b175330
+index 0000000..80a805d
 --- /dev/null
 +++ b/utils/ttyd/patches/200-luci-session-auth.patch
 @@ -0,0 +1,259 @@

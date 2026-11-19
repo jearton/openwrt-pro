@@ -9,7 +9,8 @@ if [[ -z ${OPENWRT_CI_NETNS:-} ]]; then
     sudo ip netns add "$namespace"
     trap 'sudo ip netns delete "$namespace"' EXIT
     sudo ip netns exec "$namespace" env OPENWRT_CI_NETNS="$namespace" \
-        FRESH_LAN_FIXTURE_APKS="${FRESH_LAN_FIXTURE_APKS:-}" bash "$0" "$@"
+        FRESH_LAN_FIXTURE_APKS="${FRESH_LAN_FIXTURE_APKS:-}" \
+        FRESH_LAN_FIXTURE_TTYD_INIT="${FRESH_LAN_FIXTURE_TTYD_INIT:-}" bash "$0" "$@"
     exit 0
 fi
 [[ $(ip netns identify $$) = "$OPENWRT_CI_NETNS" ]]
@@ -65,8 +66,9 @@ qemu-system-x86_64 -machine q35 -accel kvm -accel tcg -smp 2 -m 1024 \
 vm_pid=$!
 python3 "$repo/scripts/lan-vm.py" bootstrap "$test_dir"
 if [[ -n ${FRESH_LAN_FIXTURE_APKS:-} ]]; then
-    python3 "$repo/scripts/lan-vm.py" fixture "$test_dir" "$FRESH_LAN_FIXTURE_APKS"
+    python3 "$repo/scripts/lan-vm.py" fixture "$test_dir" "$FRESH_LAN_FIXTURE_APKS" "$FRESH_LAN_FIXTURE_TTYD_INIT"
 fi
+python3 "$repo/scripts/lan-vm.py" check-ipv4 "$test_dir"
 
 fetch() {
     curl -fsSL --noproxy '*' --connect-timeout 2 --max-time 5 \

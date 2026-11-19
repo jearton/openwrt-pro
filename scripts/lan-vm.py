@@ -89,14 +89,14 @@ def bootstrap(directory):
     raise RuntimeError("Unable to bootstrap the disposable VM console")
 
 
-def fixture(guest, packages, repo):
+def fixture(guest, packages, repo, ttyd_init):
     """Reproduce first initialization separately from the exact-image acceptance."""
     guest.run("""
 until test -e /etc/technitium/provisioned; do sleep 1; done
 mkdir -p /tmp/technitium-test
 """, timeout=150)
     apks = list(packages.glob("*.apk"))
-    assert len(apks) == 4  # Three released Technitium APKs plus a test TLS helper.
+    assert len(apks) == 6  # Three Technitium APKs and certificate tools for the old image.
     guest.upload(apks)
     # These two source files share a basename, so stream them to distinct paths.
     for source, target in [("etc/init.d/technitium-provision", "/etc/init.d/technitium-provision"),
@@ -104,6 +104,8 @@ mkdir -p /tmp/technitium-test
         content = (repo / "sources/full/files" / source).read_text()
         guest.run("cat > " + target + " <<'TECHNITIUM_CI_SOURCE'\n" + content +
                   "\nTECHNITIUM_CI_SOURCE\nchmod 755 " + target)
+    guest.run("cat > /etc/init.d/ttyd <<'TTYD_CI_SOURCE'\n" + ttyd_init.read_text() +
+              "\nTTYD_CI_SOURCE\nchmod 755 /etc/init.d/ttyd")
     guest.run("""
 apk --no-network --repositories-file /dev/null --allow-untrusted add /tmp/technitium-test/*.apk
 /etc/init.d/technitium stop
@@ -166,8 +168,11 @@ if __name__ == "__main__":
     guest = Guest(temporary)
     if action == "bootstrap":
         bootstrap(Path(temporary))
+    elif action == "check-ipv4":
+        guest.run("grep -Eq '(^| )ipv6.disable=1( |$)' /proc/cmdline\ntest ! -s /proc/net/if_inet6")
+        print("The guest kernel has IPv6 disabled and no IPv6 interface addresses.", flush=True)
     elif action == "fixture":
-        fixture(guest, Path(sys.argv[3]), Path(__file__).resolve().parent.parent)
+        fixture(guest, Path(sys.argv[3]), Path(__file__).resolve().parent.parent, Path(sys.argv[4]))
     elif action == "diagnose":
         diagnose(guest)
     else:

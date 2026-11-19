@@ -42,9 +42,9 @@ make -j"$(nproc)" V=s
 | [LuCI 防火墙状态](../patches/custom-ipv4/luci-nftables-legacy-warning.patch) | 识别 iptables 的 nf_tables 后端，保留真正的 legacy 告警。 |
 | [LuCI 文件管理布局](../patches/custom-ipv4/luci-filemanager-layout.patch) | 文件路径栏和表格适应视口。 |
 | [Tailscale 文件归属](../patches/custom-ipv4/tailscale-file-ownership.patch) | 由 LuCI 插件提供服务和配置文件，避免重复归属。 |
-| [Technitium 原生配方](../sources/full/package/custom/technitium/Makefile) | 固定服务器、musl 运行时、控制台和 Advanced Forwarding 的版本和校验值。 |
+| [Technitium 独立配方](https://github.com/jearton/luci-app-technitium/tree/v1.1.0/technitium) · [源码锁](../technitium-luci.lock.json) | 统一引入后台包和 LuCI 包，固定服务器、musl 运行时、控制台和 Advanced Forwarding 的版本和校验值。 |
 | [LuCI 来源锁定](../technitium-luci.lock.json) | 固定独立 Technitium 管理插件的提交。 |
-| [终端授权](../patches/custom-ipv4/ttyd-luci-session.patch) | ttyd 绑定 LAN，使用 rpcd 校验 LuCI 终端写权限，检查 WebSocket 来源，并定期校验已建立连接的会话。 |
+| [终端授权和证书适配](../patches/custom-ipv4/ttyd-luci-session.patch) | ttyd 绑定 LAN，使用 rpcd 校验 LuCI 终端写权限，检查 WebSocket 来源，并定期校验已建立连接的会话。r4 将 uHTTPd 的 DER 或 PEM 证书复制为私有运行目录中的 PEM，保留原文件。 |
 | [启动时配置](../sources/full/files/etc/uci-defaults/92-custom-ipv4) | 保留 Netdata 和 ttyd 的开机启动。 |
 
 升级前更新来源锁和校验和。先对目标源码执行 `git apply --check`，再构建并比较 manifest 差异。保留前一版 APK、系统盘和路由器配置备份。

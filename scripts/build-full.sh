@@ -98,6 +98,7 @@ grep -Fx '# CONFIG_PACKAGE_dnsmasq_full_dhcpv6 is not set' .config
 grep -Fx CONFIG_PACKAGE_luci-i18n-argon-config-zh-cn=y .config
 grep -Fx CONFIG_PACKAGE_kmod-bonding=y .config
 grep -Fx CONFIG_PACKAGE_px5g-mbedtls=y .config
+grep -Fx CONFIG_PACKAGE_openssl-util=y .config
 for package in technitium luci-app-technitium luci-i18n-technitium-zh-cn adguardhome luci-app-adguardhome; do
     grep -Fx "CONFIG_PACKAGE_${package}=y" .config
 done
@@ -125,8 +126,10 @@ def versions(path):
         return dict(line.strip().split(" - ", 1) for line in stream)
 old, new = map(versions, sys.argv[1:3])
 old["kmod-bonding"] = old["kmod-macvlan"]
-old["ttyd"] = "1.7.7-r3"
+old["ttyd"] = "1.7.7-r4"
 old["px5g-mbedtls"] = "11"
+old["openssl-util"] = "3.5.9-r1"
+old["libopenssl-conf"] = "3.5.9-r1"
 for name in ("docker", "dockerd", "docker-compose", "containerd", "runc", "tini",
              "luci-app-dockerman", "luci-i18n-dockerman-zh-cn"):
     old.pop(name, None)

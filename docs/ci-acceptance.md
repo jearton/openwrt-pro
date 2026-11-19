@@ -1,0 +1,72 @@
+# 固件启动验收与 CI 故障记录
+
+## 两类验收
+
+- 完整镜像验收由 Build full firmware 工作流执行。它编译固定的 OpenWrt 和 feeds、核对软件包版本与全部 kmod 的内核 ABI，然后将生成的 EFI 镜像解压到全新的临时磁盘启动。
+- Technitium 初始化回归由 Reproduce Technitium first boot 工作流执行。它使用按 SHA256 固定的历史发布镜像，安装已发布的 Technitium APK、应用当前固件的初始化和 ttyd init 脚本，再以全新的 DNS 数据目录验证。这个测试用于快速定位集成问题，不能替代完整新镜像验收。
+
+完整构建在启动验收前上传名为 unverified-firmware 的临时制品。这个名称表示尚未验收，不能当作正式发布。只有启动验收通过，工作流才推送 GHCR 候选镜像并重新拉取、核对 SHA256。
+
+初始化回归所用的旧镜像缺少 HTTPS 证书生成工具，因此测试额外安装按 SHA256 固定的官方 px5g 辅助包。交付固件中的 px5g 由固定 OpenWrt 源码编译，版本由镜像包清单检查；回归辅助包不决定交付版本。
+
+## 网络与凭证边界
+
+测试运行于 Linux CI runner 的独立 network namespace：
+
+- namespace 中只有 loopback 和专用于单台 QEMU guest 的 TAP，没有物理接口或默认路由。
+- 测试客户端使用 192.168.1.2/24，直接访问 guest LAN 192.168.1.1。
+- namespace 关闭 IPv6；guest 保留内核参数 ipv6.disable=1。
+- 不连接生产 LAN、Tailnet、WAN 或宿主机业务网络，不修改生产 DNS 和防火墙。
+- 测试通过串口写入一次性的 SSH 公钥。私钥、known_hosts 和测试磁盘只保存在临时目录，退出时销毁；发布的压缩镜像不包含这把测试密钥。
+- HTTP、HTTPS 和 WebSocket 测试使用临时 VM 自己的 LuCI 会话，不使用物理机凭证。
+
+测试完成后关闭 QEMU、删除临时磁盘和网络 namespace。排查失败时保留在 CI 日志中的内容包括服务状态、监听端口、DNS 条件转发区、相关日志，以及 DNS 报文摘要，不输出管理员初始密码或会话 token。
+
+## 验收项目
+
+| 项目 | 必须满足 |
+| --- | --- |
+| LuCI | 未登录请求被要求认证；登录后能打开 Technitium LuCI 页面 |
+| Netdata | 本地仪表盘可获取；charts API 包含 system.cpu |
+| Technitium Console | 服务返回已打包的现代控制台入口 |
+| DNS | 外部 LAN 客户端的 UDP/TCP A 查询返回 LAN 地址，PTR 查询返回 openwrt.lan |
+| 终端 | 未登录、伪造 token、错误 Origin 的 WebSocket 均被拒绝；合法 LuCI 会话可打开终端并实际执行命令 |
+| HTTP/HTTPS 会话 | 两种登录态分别可用，HTTPS 会话不能回退用于 HTTP 终端 |
+| 包与内核 | 包版本只允许声明过的变化；所有 kmod 依赖与镜像内核 ABI 一致 |
+
+这些自动检查不代表已经完成 Mac 浏览器、物理网卡、硬件传感器、WAN 出口和代理节点的实机验收。完整交付仍应分别记录浏览器与物理机验证结果。
+
+## 2026-11-19：UDP 转发误报
+
+原来的 CI 使用 QEMU user-mode 网络，将宿主机 127.0.0.1:10553 转发到 guest 的 53 端口。检查表现为 UDP 查询超时。
+
+[带抓包的回归任务](https://github.com/jearton/openwrt-pro/actions/runs/44542892904)证明：
+
+- 初始化脚本成功退出，并生成完成标记。
+- Technitium 监听 IPv4 TCP/UDP 53，私网递归限制仍有效。
+- VM 内查询 Technitium、LAN 地址及 dnsmasq 5353 均得到正确答案。
+- 抓包显示外部查询到达 guest，guest 立即返回正确的 UDP A 应答，但宿主机转发端口没有交付回复。
+- 同一路径的 TCP 查询成功。
+
+修复是让 CI 测试客户端通过独立 namespace 中的 TAP 直接访问 LAN，移除这条验收路径对 QEMU UDP 端口转发的依赖。[首次 TAP 回归](https://github.com/jearton/openwrt-pro/actions/runs/44544187698)已通过 UDP/TCP A 与 PTR 检查，随后暴露了下述独立的 HTTPS 问题。没有通过放宽固件 DNS ACL 或防火墙消除误报。
+
+## 2026-11-19：HTTPS 缺少证书生成依赖
+
+上述首次 TAP 回归中，LuCI 登录和 DNS 检查通过，HTTPS 登录因 443 未监听而失败。配置中已声明监听 443，但历史镜像既没有 px5g，也没有 openssl 命令，uHTTPd 无法在首次启动时生成证书。
+
+固件配置补入 px5g-mbedtls，并将它加入严格包版本检查。该包属于 OpenWrt 官方组件，不修改 LuCI 或 Technitium 的认证实现。HTTP/HTTPS 和终端会话的全部检查继续保留。
+
+## 2026-11-19：ttyd 不能读取 uHTTPd 的 DER 证书
+
+[加入证书生成工具后的回归](https://github.com/jearton/openwrt-pro/actions/runs/44545464681)中，uHTTPd 已监听 443，ttyd 日志报 PEM routines::no start line，终端端口未监听。uHTTPd 默认生成 DER 编码的证书，ttyd 的 libwebsockets/OpenSSL 后端要求 PEM。
+
+ttyd 补丁 r4 通过官方 openssl-util 将配置中的 DER 或 PEM 证书和私钥规范化为运行时 PEM：
+
+- 原证书和私钥保持原样，procd 继续跟踪它们的变化。
+- 临时目录权限为 0700，生成的证书和私钥权限均为 0600。
+- 输入错误时停止启动，不降低 LuCI 会话和 WebSocket 权限要求。
+- EC/RSA、DER/PEM 四种组合及错误输入均由实际 OpenSSL 转换验证。
+
+## 回滚
+
+固件或配置修复未通过时不提升为正式发布，保留已有 Release 和 SHA256。源码可用新的 revert 提交回退；不要替换已有发布镜像的内容。每次修复均以新构建和新临时磁盘重新验收。
