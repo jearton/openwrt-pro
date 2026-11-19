@@ -100,9 +100,14 @@ until [[ $(status "$luci_http/cgi-bin/luci/" 2>/dev/null) = 403 ]] &&
 done
 
 login() {
+    local -a password_args=(--data-urlencode "luci_password@$test_dir/root-password")
+    # curl omits a name@file parameter when the file is empty.
+    if [[ ! -s "$test_dir/root-password" ]]; then
+        password_args=(--data-urlencode 'luci_password=')
+    fi
     curl -ksS --noproxy '*' --connect-timeout 2 --max-time 5 \
         --cookie-jar "$2" --data-urlencode luci_username=root \
-        --data-urlencode "luci_password@$test_dir/root-password" "$1/cgi-bin/luci/" -o /dev/null
+        "${password_args[@]}" "$1/cgi-bin/luci/" -o /dev/null
 }
 
 : > "$test_dir/root-password"
