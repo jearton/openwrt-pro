@@ -106,3 +106,6 @@ r6 只在 LuCI 授权的 TLS 监听设置 ALPN 为 http/1.1，保留来源、LuC
 ## CI 旧镜像 fixture 的 SSH 启动等待
 
 2026-11-20 的 [44575439069](https://github.com/jearton/openwrt-pro/actions/runs/44575439069) 在旧镜像 bootstrap 等待 SSH 时超时，尚未进入新包安装和断言阶段；不能将该结果标记为新固件功能验收失败或成功。排障输出随后能取得 DNS 答案和 Netdata/Console HTTP 响应。bootstrap 原先持有串口 socket 却停止读取，再等待 SSH 150 秒。等待器改为持续排空串口，并给无硬件加速的冷启动 300 秒上限。新镜像的 Mac/PVE/9001 验收结果独立记录，不用 fixture 结果替代。
+
+
+修复后的[旧镜像初始化回归 44577868930](https://github.com/jearton/openwrt-pro/actions/runs/44577868930)已通过，耗时 3 分 57 秒，完成每次终端登录、空密码拒绝、DNS 接管、源 IP 保留和规则关闭/恢复检查。该回归仍不替代正式镜像的 Mac 验收。正式镜像的[GHCR 发布与摘要回拉校验](https://github.com/jearton/openwrt-pro/actions/runs/44578122539)也已通过，公开不可变引用见[发布文档](releases.md)。
