@@ -4,6 +4,8 @@
 
 最新发布：[v25.12.6-20261120](https://github.com/jearton/openwrt-pro/releases/tag/v25.12.6-20261120)。含 `kmod-bonding`，Netdata、ttyd 默认自启；终端每次要求系统登录并填满窗口剩余高度。查看[本次验收与 Mac 截图](docs/acceptance-20261120.md)及[补丁清单](patches/README.md)。
 
+已知问题：扩展验收发现默认 AliDNS DoH 配合 Technitium DNSSEC 校验时，部分公网域名返回 SERVFAIL，尚未修复。不能将本版本标为全部功能验收通过；通过项目、实验配置和未验证范围见[VM 扩展验收](docs/vm-extended-validation-20261120.md)。
+
 ## 功能清单
 
 ### OpenWrt 原生功能
