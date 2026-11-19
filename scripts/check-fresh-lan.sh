@@ -2,6 +2,24 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
 
+# Keep the VM and its test client in their own network namespace. The TAP
+# has no physical member, WAN, default route or route to the runner's LAN.
+if [[ -z ${OPENWRT_CI_NETNS:-} ]]; then
+    namespace="openwrt-ci-$$"
+    sudo ip netns add "$namespace"
+    trap 'sudo ip netns delete "$namespace"' EXIT
+    sudo ip netns exec "$namespace" env OPENWRT_CI_NETNS="$namespace" \
+        FRESH_LAN_FIXTURE_APKS="${FRESH_LAN_FIXTURE_APKS:-}" bash "$0" "$@"
+    exit 0
+fi
+[[ $(ip netns identify $$) = "$OPENWRT_CI_NETNS" ]]
+sysctl -q -w net.ipv6.conf.all.disable_ipv6=1 net.ipv6.conf.default.disable_ipv6=1
+ip link set lo up
+ip tuntap add dev lan-test mode tap
+ip addr add 192.168.1.2/24 dev lan-test
+ip link set lan-test up
+[[ -z $(ip -4 route show default) ]]
+
 test_dir=$(mktemp -d)
 repo=$(cd -- "$(dirname -- "$0")/.." && pwd)
 vm_pid=
@@ -11,12 +29,12 @@ cleanup() {
         if [[ -f "$test_dir/key" ]]; then
             python3 "$repo/scripts/lan-vm.py" diagnose "$test_dir" || true
         fi
-        for endpoint in 18080/cgi-bin/luci/ 17681/cgi-bin/luci/terminal-session/ 29999/v3/ 29999/api/v1/charts 15380/; do
-            code=$(curl -ksS --noproxy '*' --connect-timeout 1 --max-time 2 -o /dev/null -w '%{http_code}' "http://127.0.0.1:$endpoint" 2>/dev/null || true)
+        for endpoint in 80/cgi-bin/luci/ 7681/cgi-bin/luci/terminal-session/ 19999/v3/ 19999/api/v1/charts 5380/; do
+            code=$(curl -ksS --noproxy '*' --connect-timeout 1 --max-time 2 -o /dev/null -w '%{http_code}' "http://192.168.1.1:$endpoint" 2>/dev/null || true)
             printf 'Guest endpoint %s returned HTTP %s\n' "$endpoint" "$code"
         done
-        dig @127.0.0.1 -p 10553 openwrt.lan A +short +time=1 +tries=1 || true
-        dig @127.0.0.1 -p 10553 openwrt.lan A +short +tcp +time=2 +tries=1 || true
+        dig @192.168.1.1 openwrt.lan A +short +time=1 +tries=1 || true
+        dig @192.168.1.1 openwrt.lan A +short +tcp +time=2 +tries=1 || true
         tcpdump -nn -r "$test_dir/lan.pcap" 'udp port 53 or tcp port 53' 2>/dev/null | tail -n 15 || true
     fi
     if [[ -n $vm_pid ]]; then
@@ -34,15 +52,7 @@ trap cleanup EXIT
 
 gzip -dc "$1" > "$test_dir/disk.img"
 cp /usr/share/OVMF/OVMF_VARS_4M.fd "$test_dir/vars.fd"
-lan=user,id=lan,restrict=on,ipv6=off,net=192.168.1.0/24,host=192.168.1.2
-lan+=,hostfwd=tcp:127.0.0.1:10022-192.168.1.1:22
-lan+=,hostfwd=tcp:127.0.0.1:18080-192.168.1.1:80
-lan+=,hostfwd=tcp:127.0.0.1:18443-192.168.1.1:443
-lan+=,hostfwd=tcp:127.0.0.1:17681-192.168.1.1:7681
-lan+=,hostfwd=tcp:127.0.0.1:29999-192.168.1.1:19999
-lan+=,hostfwd=tcp:127.0.0.1:15380-192.168.1.1:5380
-lan+=,hostfwd=udp:127.0.0.1:10553-192.168.1.1:53
-lan+=,hostfwd=tcp:127.0.0.1:10553-192.168.1.1:53
+lan=tap,id=lan,ifname=lan-test,script=no,downscript=no
 qemu-system-x86_64 -machine q35 -accel kvm -accel tcg -smp 2 -m 1024 \
     -display none -monitor none \
     -chardev "socket,id=serial0,path=$test_dir/serial.sock,server=on,wait=off,logfile=$test_dir/serial.log" \
@@ -60,25 +70,25 @@ fi
 
 fetch() {
     curl -fsSL --noproxy '*' --connect-timeout 2 --max-time 5 \
-        "http://127.0.0.1:$1" -o "$2"
+        "http://192.168.1.1:$1" -o "$2"
 }
 
 deadline=$((SECONDS + 300))
-luci_http=http://127.0.0.1:18080
+luci_http=http://192.168.1.1
 terminal_path=/cgi-bin/luci/terminal-session/
-terminal_http="http://127.0.0.1:17681$terminal_path"
+terminal_http="http://192.168.1.1:7681$terminal_path"
 status() {
     curl -ksS --noproxy '*' --connect-timeout 2 --max-time 5 -o /dev/null -w '%{http_code}' "$@"
 }
 
 until [[ $(status "$luci_http/cgi-bin/luci/" 2>/dev/null) = 403 ]] &&
     [[ $(status "$terminal_http" 2>/dev/null) = 403 ]] &&
-    fetch 29999/v3/ "$test_dir/netdata.html" 2>/dev/null &&
-    fetch 29999/api/v1/charts "$test_dir/charts.json" 2>/dev/null &&
+    fetch 19999/v3/ "$test_dir/netdata.html" 2>/dev/null &&
+    fetch 19999/api/v1/charts "$test_dir/charts.json" 2>/dev/null &&
     jq -e '.charts["system.cpu"] != null' "$test_dir/charts.json" >/dev/null &&
-    fetch 15380/ "$test_dir/technitium.html" 2>/dev/null &&
+    fetch 5380/ "$test_dir/technitium.html" 2>/dev/null &&
     grep -q 'id="root"' "$test_dir/technitium.html" &&
-    [[ $(dig @127.0.0.1 -p 10553 openwrt.lan A +short +time=1 +tries=1) = 192.168.1.1 ]]; do
+    [[ $(dig @192.168.1.1 openwrt.lan A +short +time=1 +tries=1) = 192.168.1.1 ]]; do
     kill -0 "$vm_pid"
     if (( SECONDS >= deadline )); then
         echo 'Fresh LAN boot did not serve LuCI, ttyd, Netdata and native DNS' >&2
@@ -95,13 +105,13 @@ login() {
 login "$luci_http" "$test_dir/http.cookies"
 curl -kfsS --noproxy '*' -b "$test_dir/http.cookies"     "$luci_http/cgi-bin/luci/admin/services/technitium" -o "$test_dir/technitium-luci.html"
 grep -Eq 'technitium[./]status' "$test_dir/technitium-luci.html"
-[[ $(dig @127.0.0.1 -p 10553 openwrt.lan A +short +tcp +time=2 +tries=1) = 192.168.1.1 ]]
-[[ $(dig @127.0.0.1 -p 10553 -x 192.168.1.1 +short +time=2 +tries=1) = openwrt.lan. ]]
-login https://127.0.0.1:18443 "$test_dir/https.cookies"
+[[ $(dig @192.168.1.1 openwrt.lan A +short +tcp +time=2 +tries=1) = 192.168.1.1 ]]
+[[ $(dig @192.168.1.1 -x 192.168.1.1 +short +time=2 +tries=1) = openwrt.lan. ]]
+login https://192.168.1.1 "$test_dir/https.cookies"
 for scheme in http https; do
     cookie="$(awk -v name="sysauth_$scheme" '$6 == name { print $6 "=" $7 }' "$test_dir/$scheme.cookies")"
     test -n "$cookie"
-    curl -kfsS --noproxy '*' -b "$cookie" "$scheme://127.0.0.1:17681$terminal_path" \
+    curl -kfsS --noproxy '*' -b "$cookie" "$scheme://192.168.1.1:7681$terminal_path" \
         -o "$test_dir/terminal.html"
     grep -qi ttyd "$test_dir/terminal.html"
 done
@@ -116,8 +126,8 @@ import websocket
 
 with open(sys.argv[1]) as cookies:
     session, = (line.split()[-1] for line in cookies if "\tsysauth_http\t" in line)
-url = 'ws://127.0.0.1:17681' + sys.argv[2] + 'ws'
-origin = 'http://127.0.0.1:17681'
+url = 'ws://192.168.1.1:7681' + sys.argv[2] + 'ws'
+origin = 'http://192.168.1.1:7681'
 cookie = 'sysauth_http=' + session
 
 def connect(value=None, source=origin):

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Manage only the disposable, localhost-forwarded CI VM used by check-fresh-lan."""
+"""Manage only the disposable, isolated CI VM used by check-fresh-lan."""
 
 from pathlib import Path
 import socket
@@ -14,7 +14,7 @@ class Guest:
         self.directory = Path(directory)
 
     def options(self):
-        return ["-i", str(self.directory / "key"), "-p", "10022",
+        return ["-i", str(self.directory / "key"), "-p", "22",
                 "-o", "BatchMode=yes", "-o", "ConnectTimeout=3",
                 "-o", "StrictHostKeyChecking=accept-new",
                 "-o", "UserKnownHostsFile=" + str(self.directory / "known_hosts"),
@@ -22,7 +22,7 @@ class Guest:
 
     def run(self, script, timeout=60):
         result = subprocess.run(
-            ["ssh", *self.options(), "root@127.0.0.1", "sh -se"],
+            ["ssh", *self.options(), "root@192.168.1.1", "sh -se"],
             input="set -eu\n" + script, text=True, capture_output=True, timeout=timeout)
         if result.returncode:
             raise RuntimeError(result.stdout + result.stderr)
@@ -32,7 +32,7 @@ class Guest:
         options = self.options()
         options[options.index("-p")] = "-P"
         subprocess.run(["scp", "-O", *options, *map(str, files),
-                        "root@127.0.0.1:/tmp/technitium-test/"], check=True, timeout=120)
+                        "root@192.168.1.1:/tmp/technitium-test/"], check=True, timeout=120)
 
     def wait(self, previous_boot=None):
         deadline = time.monotonic() + 150
@@ -133,8 +133,9 @@ netstat -lntup
 printf '\nLAN and dnsmasq configuration\n'
 uci -q get network.lan.ipaddr
 uci -q show dhcp
+uci -q show uhttpd
 printf '\nTechnitium startup messages\n'
-logread | grep -Ei 'technitium|dnsmasq|procd' | tail -n 60
+logread | grep -Ei 'technitium|dnsmasq|procd|uhttpd' | tail -n 60
 for logfile in /tmp/technitium-logs/*.log; do
     test ! -f "$logfile" || tail -n 35 "$logfile"
 done
