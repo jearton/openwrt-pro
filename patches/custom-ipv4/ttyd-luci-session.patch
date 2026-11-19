@@ -7,7 +7,7 @@ index c6733c4..8f3edd8 100644
  PKG_NAME:=ttyd
  PKG_VERSION:=1.7.7
 -PKG_RELEASE:=1
-+PKG_RELEASE:=4
++PKG_RELEASE:=5
  
  PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
  PKG_SOURCE_URL:=https://codeload.github.com/tsl0922/ttyd/tar.gz/$(PKG_VERSION)?
@@ -20,6 +20,15 @@ index c6733c4..8f3edd8 100644
  	URL:=https://github.com/tsl0922/ttyd
  	SUBMENU:=Terminal
  endef
+@@ -41,6 +41,8 @@
+ define Package/ttyd/install
+ 	$(INSTALL_DIR) $(1)/usr/bin
+ 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/ttyd $(1)/usr/bin/
++	$(INSTALL_DIR) $(1)/usr/libexec
++	$(INSTALL_BIN) ./files/ttyd-login $(1)/usr/libexec/ttyd-login
+ 	$(INSTALL_DIR) $(1)/etc/config/
+ 	$(INSTALL_CONF) ./files/ttyd.config $(1)/etc/config/ttyd
+ 	$(INSTALL_DIR) $(1)/etc/init.d/
 diff --git a/utils/ttyd/files/ttyd.config b/utils/ttyd/files/ttyd.config
 index 8dbde70..e9bb2da 100644
 --- a/utils/ttyd/files/ttyd.config
@@ -31,7 +40,7 @@ index 8dbde70..e9bb2da 100644
 -	option command '/bin/login'
 +	option luci_auth '1'
 +	option check_origin '1'
-+	option command '/bin/ash -l'
++	option command '/usr/libexec/ttyd-login'
  
 diff --git a/utils/ttyd/files/ttyd.init b/utils/ttyd/files/ttyd.init
 index 7e24aea..57407b3 100644
@@ -141,6 +150,20 @@ index 7e24aea..57407b3 100644
 +	procd_add_reload_trigger "$NAME" uhttpd
 +	procd_add_interface_trigger "interface.*" lan /etc/init.d/ttyd restart
  }
+diff --git a/utils/ttyd/files/ttyd-login b/utils/ttyd/files/ttyd-login
+new file mode 100755
+--- /dev/null
++++ b/utils/ttyd/files/ttyd-login
+@@ -0,0 +1,9 @@
++#!/bin/sh
++# SPDX-License-Identifier: GPL-3.0-or-later
++
++if ! awk -F: '$1 == "root" && $2 != "" && $2 !~ /^[!*]/ { ready = 1 } END { exit !ready }' /etc/shadow; then
++	printf '%s\n' 'Set a system password in LuCI before using the terminal.'
++	exit 1
++fi
++
++exec /bin/login
 diff --git a/utils/ttyd/patches/200-luci-session-auth.patch b/utils/ttyd/patches/200-luci-session-auth.patch
 new file mode 100644
 index 0000000..80a805d

@@ -23,11 +23,24 @@ return view.extend({
 			override = uci.get_first('ttyd', 'ttyd', 'url_override');
 		}
 
-		return E('iframe', {
+		const terminal = E('iframe', {
 			src: override || endpoint.href,
 			title: _('Terminal'),
-			style: 'width: 100%; min-height: 500px; border: none; border-radius: 3px; resize: vertical;'
+			style: 'display: block; width: 100%; height: calc(100dvh - 12rem); min-height: 320px; border: none; border-radius: 3px; resize: vertical;'
 		});
+		const resizeTerminal = () => {
+			if (!terminal.isConnected)
+				return;
+			const top = Math.max(0, terminal.getBoundingClientRect().top);
+			terminal.style.height = Math.max(320, window.innerHeight - top - 24) + 'px';
+		};
+		if (this.resizeTerminal)
+			window.removeEventListener('resize', this.resizeTerminal);
+		this.resizeTerminal = resizeTerminal;
+		window.addEventListener('resize', resizeTerminal, { passive: true });
+		terminal.addEventListener('load', resizeTerminal, { once: true });
+		window.requestAnimationFrame(resizeTerminal);
+		return terminal;
 	},
 
 	handleSaveApply: null,

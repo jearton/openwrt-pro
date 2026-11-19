@@ -8,6 +8,9 @@ on:
       - '.github/workflows/check-technitium.yml'
       - 'scripts/check-fresh-lan.sh'
       - 'scripts/lan-vm.py'
+      - 'scripts/check-ttyd-login.py'
+      - 'patches/custom-ipv4/ttyd-luci-session.patch'
+      - 'sources/full/files/etc/uci-defaults/93-ttyd-luci-session'
       - 'sources/full/files/**technitium**'
 
 permissions:
@@ -61,9 +64,10 @@ jobs:
             https://raw.githubusercontent.com/openwrt/packages/093d551675b1119a06ef224d419905e8d6b2af1a/utils/ttyd/files/ttyd.init \
             -o "$RUNNER_TEMP/ttyd-test/utils/ttyd/files/ttyd.init"
           git -C "$RUNNER_TEMP/ttyd-test" init -q
-          git -C "$RUNNER_TEMP/ttyd-test" apply --include=utils/ttyd/files/ttyd.init \
+          git -C "$RUNNER_TEMP/ttyd-test" apply --include=utils/ttyd/files/ttyd.init --include=utils/ttyd/files/ttyd-login \
             "$GITHUB_WORKSPACE/patches/custom-ipv4/ttyd-luci-session.patch"
           python3 scripts/check-ttyd-tls.py "$RUNNER_TEMP/ttyd-test/utils/ttyd/files/ttyd.init"
+          sh -n "$RUNNER_TEMP/ttyd-test/utils/ttyd/files/ttyd-login"
       - name: Reproduce first initialization and check LAN services
         env:
           FRESH_LAN_FIXTURE_APKS: ${{ runner.temp }}/technitium-apks

@@ -101,9 +101,15 @@ done
 
 login() {
     curl -ksS --noproxy '*' --connect-timeout 2 --max-time 5 \
-        --cookie-jar "$2" --data 'luci_username=root&luci_password=' "$1/cgi-bin/luci/" -o /dev/null
+        --cookie-jar "$2" --data-urlencode luci_username=root \
+        --data-urlencode "luci_password@$test_dir/root-password" "$1/cgi-bin/luci/" -o /dev/null
 }
 
+: > "$test_dir/root-password"
+chmod 600 "$test_dir/root-password"
+login "$luci_http" "$test_dir/http.cookies"
+python3 "$repo/scripts/check-ttyd-login.py" "$test_dir/http.cookies" "$test_dir/root-password" empty
+python3 "$repo/scripts/lan-vm.py" terminal-password "$test_dir"
 login "$luci_http" "$test_dir/http.cookies"
 curl -kfsS --noproxy '*' -b "$test_dir/http.cookies"     "$luci_http/cgi-bin/luci/admin/services/technitium" -o "$test_dir/technitium-luci.html"
 grep -Eq 'technitium[./]status' "$test_dir/technitium-luci.html"
@@ -119,46 +125,6 @@ for scheme in http https; do
 done
 [[ $(status -b "$cookie" "$terminal_http") = 403 ]]
 
-/usr/bin/python3 - "$test_dir/http.cookies" "$terminal_path" <<'PY'
-import sys
-import time
-from contextlib import closing
-
-import websocket
-
-with open(sys.argv[1]) as cookies:
-    session, = (line.split()[-1] for line in cookies if "\tsysauth_http\t" in line)
-url = 'ws://192.168.1.1:7681' + sys.argv[2] + 'ws'
-origin = 'http://192.168.1.1:7681'
-cookie = 'sysauth_http=' + session
-
-def connect(value=None, source=origin):
-    return websocket.create_connection(url, cookie=value, origin=source, subprotocols=['tty'], timeout=4)
-
-for invalid, source in [(None, origin), ('sysauth_http=' + '0' * 32, origin), (cookie, 'http://example.invalid')]:
-    try:
-        with closing(connect(invalid, source)):
-            raise AssertionError('Unauthorized WebSocket upgrade was accepted')
-    except (websocket.WebSocketBadStatusException, websocket.WebSocketConnectionClosedException):
-        pass
-
-with closing(connect(cookie)) as terminal:
-    terminal.send_binary(b'{"columns":80,"rows":24,"AuthToken":""}')
-    deadline = time.monotonic() + 12
-    commands_sent = False
-    output = b''
-    while time.monotonic() < deadline:
-        frame = terminal.recv()
-        if not isinstance(frame, bytes) or not frame.startswith(b'0'):
-            continue
-        output += frame[1:]
-        if not commands_sent:
-            terminal.send_binary(b"0printf '\\nTTyD-SESSION-%s\\n' \"$(id -u)\"\n")
-            commands_sent = True
-        if b'\nTTyD-SESSION-0\r\n' in output:
-            break
-    else:
-        raise AssertionError('LuCI session did not open a root shell')
-PY
+python3 "$repo/scripts/check-ttyd-login.py" "$test_dir/http.cookies" "$test_dir/root-password" password
 python3 "$repo/scripts/lan-vm.py" forced-dns "$test_dir"
 echo 'Fresh isolated IPv4 boot verified LuCI, Netdata, authorized ttyd, and the Technitium console and DNS on UDP/TCP'

@@ -4,6 +4,7 @@
 
 from pathlib import Path
 import re
+import secrets
 import socket
 import subprocess
 import sys
@@ -107,6 +108,10 @@ mkdir -p /tmp/technitium-test
                   "\nTECHNITIUM_CI_SOURCE\nchmod 755 " + target)
     guest.run("cat > /etc/init.d/ttyd <<'TTYD_CI_SOURCE'\n" + ttyd_init.read_text() +
               "\nTTYD_CI_SOURCE\nchmod 755 /etc/init.d/ttyd")
+    guest.run("cat > /usr/libexec/ttyd-login <<'TTYD_LOGIN_CI_SOURCE'\n" +
+              (ttyd_init.parent / "ttyd-login").read_text() +
+              "\nTTYD_LOGIN_CI_SOURCE\nchmod 755 /usr/libexec/ttyd-login")
+    guest.run((repo / "sources/full/files/etc/uci-defaults/93-ttyd-luci-session").read_text())
     guest.run("""
 apk --no-network --repositories-file /dev/null --allow-untrusted add /tmp/technitium-test/*.apk
 /etc/init.d/technitium stop
@@ -224,6 +229,13 @@ if __name__ == "__main__":
         print("The guest kernel has IPv6 disabled and no IPv6 interface addresses.", flush=True)
     elif action == "forced-dns":
         forced_dns(guest)
+    elif action == "terminal-password":
+        password = secrets.token_hex(24)
+        guest.run("printf '%s\\n' 'root:" + password + "' | chpasswd")
+        password_file = Path(temporary) / "root-password"
+        password_file.write_text(password)
+        password_file.chmod(0o600)
+        print("A disposable system password was set only on the test disk", flush=True)
     elif action == "fixture":
         fixture(guest, Path(sys.argv[3]), Path(__file__).resolve().parent.parent, Path(sys.argv[4]))
     elif action == "diagnose":

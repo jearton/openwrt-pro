@@ -18,6 +18,12 @@ Bleach 作者的[公开仓库](https://github.com/bleach1991/lede)当前主分�
 
 ## 网页终端
 
-本项目已发布的 APK 清单中包含官方 luci-app-ttyd，版本 26.288.56989~75a306d。底层另有 ttyd 服务。LuCI 的嵌入脚本调整为复用当前协议、主机和终端会话路径；底层 ttyd 补丁增加 LuCI 会话权限、WebSocket Origin 检查、LAN 限制及证书适配。它们分别是入口和服务，不是另造一个终端应用。
+本项目已发布的 APK 清单中包含官方 luci-app-ttyd，版本 26.288.56989~75a306d。底层另有 ttyd 服务。LuCI 的嵌入脚本调整为复用当前协议、主机和终端会话路径，并填充窗口剩余高度；底层 ttyd 补丁增加 LuCI 会话权限、WebSocket Origin 检查、LAN 限制及证书适配。它们分别是入口和服务，不是另造一个终端应用。
 
-已发布清单中的 ttyd 为 1.7.7-r3；待验收的新构建为 1.7.7-r4，增加 uHTTPd DER 证书到运行时 PEM 的适配。查看物理机实际版本时，以该机的 APK 已安装包查询为准，不能将待验收版本当作已经安装。
+已发布清单中的 ttyd 为 1.7.7-r3；待验收的新构建为 1.7.7-r5，包含证书适配及每次系统登录，空密码不放行。查看物理机实际版本时，以该机的 APK 已安装包查询为准，不能将待验收版本当作已经安装。
+
+## muink 旧插件与当前入口
+
+[muink/luci-app-netdata](https://github.com/muink/luci-app-netdata)于 2026-01-11 归档。其 [main.js](https://github.com/muink/luci-app-netdata/blob/master/htdocs/luci-static/resources/view/netdata/main.js)也是嵌入 Netdata 网页，并未自行绘制经典 dashboard；它另有启停、端口、SSL、Nginx 及主配置文件编辑页面。当前 ImmortalWrt 入口只嵌入仪表盘，这些管理选项确实存在差异，不能称两套插件功能完全相同。
+
+[ImmortalWrt 主仓库仍提供 JS 入口](https://github.com/immortalwrt/luci/blob/master/applications/luci-app-netdata/htdocs/luci-static/resources/view/netdata.js)，不必因为 muink 仓库归档就重写整个插件。[Netdata 官方界面说明](https://learn.netdata.cloud/docs/dashboards-and-charts/tabs/metrics)也确认新版仍有预置的单节点 CPU、内存、磁盘及网络概览。因此「没有任何预置 dashboard」不准确；当前要解决的是默认呈现方式及软路由常用图表布局。当前打包版本可用的具体默认入口仍须浏览器验证。

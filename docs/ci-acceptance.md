@@ -31,7 +31,7 @@
 | Technitium Console | 服务返回已打包的现代控制台入口 |
 | DNS | 外部 LAN 客户端的 UDP/TCP A 查询返回 LAN 地址，PTR 查询返回 openwrt.lan |
 | 强制 DNS | 指定不可达的外部 DNS 地址仍取得本机答案；规则计数增加，Technitium 统计保留独立客户端源 IP；关闭规则后停止接管，重启用后恢复；重跑首启默认值保留关闭状态 |
-| 终端 | 未登录、伪造 token、错误 Origin 的 WebSocket 均被拒绝；合法 LuCI 会话可打开终端并实际执行命令 |
+| 终端 | 未登录、伪造 token、错误 Origin 的 WebSocket 均被拒绝；合法 LuCI 会话仍须输入系统用户名和密码；空密码拒绝；重连再次要求登录；认证后实际执行命令 |
 | HTTP/HTTPS 会话 | 两种登录态分别可用，HTTPS 会话不能回退用于 HTTP 终端 |
 | 包与内核 | 包版本只允许声明过的变化；所有 kmod 依赖与镜像内核 ABI 一致 |
 | 打包权限 | 直接检查 squashfs 元数据，公开系统目录允许非 root 服务读取和遍历；shadow 保持私有 |
@@ -80,6 +80,12 @@ ttyd 补丁 r4 通过官方 openssl-util 将配置中的 DER 或 PEM 证书和�
 构建入口明确设置 umask 022，并将只包含公开默认配置和 UI 文件的 overlay 目录设为 0755，普通文件设为 0644、已有可执行文件设为 0755，同时删除 AppleDouble 元数据文件。不会对整个 rootfs 递归放宽权限，shadow、私钥和服务数据仍按各自配方保持私有。
 
 scripts/check-rootfs-permissions.py 在打包后直接检查 squashfs 元数据，阻止上述目录权限问题进入发布。修复后的完整镜像仍须重新完成 9000 浏览器与 9001 验收；仅编译成功不能提升为正式 Release。
+
+## 2026-11-20：终端改为每次系统登录
+
+用户的新要求替代此前复用 LuCI 会话直接进入 shell 的交互。r5 保留 LuCI 会话、Origin 和持续授权检查，命令改为由包安装的登录助手调用 /bin/login。root 密码为空或锁定时拒绝打开 shell。首启迁移将此前 /bin/ash -l 的默认配置改为登录助手，保留其他自定义命令。
+
+隔离测试先用空密码的全新磁盘验证拒绝进入，再仅在临时测试磁盘设置随机系统密码。LuCI 登录后，终端必须先出现 login 和 Password 提示，认证后才可执行 root 命令；新建连接须重新登录。测试密码不写入发布镜像、源码或日志。
 
 ## 回滚
 

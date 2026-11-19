@@ -134,7 +134,7 @@ def versions(path):
         return dict(line.strip().split(" - ", 1) for line in stream)
 old, new = map(versions, sys.argv[1:3])
 old["kmod-bonding"] = old["kmod-macvlan"]
-old["ttyd"] = "1.7.7-r4"
+old["ttyd"] = "1.7.7-r5"
 old["luci-app-netdata"] = "0.1-r1"
 old["luci-i18n-netdata-zh-cn"] = "0.1"
 old["px5g-mbedtls"] = "11"
