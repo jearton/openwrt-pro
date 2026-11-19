@@ -5,7 +5,7 @@ diff --git a/package/custom/luci-app-netdata/Makefile b/package/custom/luci-app-
  
  LUCI_TITLE:=LuCI support for Netdata
  LUCI_DEPENDS:=+netdata
-+PKG_VERSION:=0
++PKG_VERSION:=0.1
 +PKG_RELEASE:=1
  
  include $(TOPDIR)/feeds/luci/luci.mk
@@ -14,7 +14,8 @@ diff --git a/package/custom/luci-app-netdata/htdocs/luci-static/resources/view/n
 --- a/package/custom/luci-app-netdata/htdocs/luci-static/resources/view/netdata.js
 +++ b/package/custom/luci-app-netdata/htdocs/luci-static/resources/view/netdata.js
 @@ -10,7 +10,7 @@
- 				_('Netdata Dashboard')
+-				_('Netdata Dashboard')
++				_('Real-time Monitoring')
  			]),
  			E('iframe', {
 -				'src': 'http://' + window.location.hostname + ':19999',
@@ -22,3 +23,18 @@ diff --git a/package/custom/luci-app-netdata/htdocs/luci-static/resources/view/n
  				'style': 'width: 100%; min-height: 1200px; border: none; border-radius: 3px; resize: vertical;'
  			}, null)
  		]);
+diff --git a/package/custom/luci-app-netdata/po/zh_Hans/netdata.po b/package/custom/luci-app-netdata/po/zh_Hans/netdata.po
+--- a/package/custom/luci-app-netdata/po/zh_Hans/netdata.po
++++ b/package/custom/luci-app-netdata/po/zh_Hans/netdata.po
+@@ -13,2 +13,2 @@
+-msgid "Netdata Dashboard"
+-msgstr "Netdata 仪表盘"
++msgid "Real-time Monitoring"
++msgstr "实时监控"
+diff --git a/package/custom/luci-app-netdata/po/templates/netdata.pot b/package/custom/luci-app-netdata/po/templates/netdata.pot
+--- a/package/custom/luci-app-netdata/po/templates/netdata.pot
++++ b/package/custom/luci-app-netdata/po/templates/netdata.pot
+@@ -13,2 +13,2 @@
+-msgid "Netdata Dashboard"
++msgid "Real-time Monitoring"
+ msgstr ""

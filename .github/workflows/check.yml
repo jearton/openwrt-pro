@@ -21,6 +21,7 @@ jobs:
           bash -n scripts/prepare-openwrt.sh scripts/verify-firmware.sh scripts/build-full.sh scripts/prepare-technitium-luci.sh
           bash -n scripts/check-fresh-lan.sh
           python3 -c 'import ast; ast.parse(open("scripts/lan-vm.py").read())'
+          python3 -c 'import ast; ast.parse(open("scripts/check-rootfs-permissions.py").read())'
           sh -n sources/full/files/etc/uci-defaults/93-technitium-dns sources/full/files/etc/init.d/technitium-provision sources/full/files/usr/libexec/technitium-provision
           python3 - <<'PY'
           from pathlib import Path

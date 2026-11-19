@@ -34,6 +34,7 @@
 | 终端 | 未登录、伪造 token、错误 Origin 的 WebSocket 均被拒绝；合法 LuCI 会话可打开终端并实际执行命令 |
 | HTTP/HTTPS 会话 | 两种登录态分别可用，HTTPS 会话不能回退用于 HTTP 终端 |
 | 包与内核 | 包版本只允许声明过的变化；所有 kmod 依赖与镜像内核 ABI 一致 |
+| 打包权限 | 直接检查 squashfs 元数据，公开系统目录允许非 root 服务读取和遍历；shadow 保持私有 |
 
 这些自动检查不代表已经完成 Mac 浏览器、物理网卡、硬件传感器、WAN 出口和代理节点的实机验收。完整交付仍应分别记录浏览器与物理机验证结果。
 
@@ -69,6 +70,16 @@ ttyd 补丁 r4 通过官方 openssl-util 将配置中的 DER 或 PEM 证书和�
 - EC/RSA、DER/PEM 四种组合及错误输入均由实际 OpenSSL 转换验证。
 
 修复后的[隔离回归任务](https://github.com/jearton/openwrt-pro/actions/runs/44547973505)于 2026-11-19 通过：LuCI HTTP/HTTPS 登录、Technitium 控制台、Netdata 图表 API、LAN 的 UDP/TCP A 和 PTR、终端页面及实际 shell 命令全部通过；未登录、伪造会话和错误 Origin 的 WebSocket 被拒绝，HTTPS 会话经 HTTP 访问终端也被拒绝。guest 的 IPv6 内核禁用参数和无 IPv6 地址均已检查。这是初始化回归结果，完整新镜像仍由独立构建任务另行验收。
+
+## 2026-11-20：原生构建归档带入私有目录权限
+
+189 的完整镜像在 9000 的新磁盘上停在 procd 的 ubus 阶段。1 核与 4 核均不能完成启动。串口中观察到子进程等待 RCU，但这个栈不能单独证明内核故障。清理内核后重编译，内核摘要和全部模块均未变化；旧工作镜像恢复后正常启动。
+
+直接检查故障镜像的 squashfs 元数据，确认根目录、usr 等公开路径被打包为 0700。首次导入的构建 overlay 保留了私有归档目录权限。ubus 等降权服务无法遍历这些路径，与 [OpenWrt 上游权限问题记录](https://github.com/openwrt/openwrt/issues/9545)的症状一致。
+
+构建入口明确设置 umask 022，并将只包含公开默认配置和 UI 文件的 overlay 目录设为 0755，普通文件设为 0644、已有可执行文件设为 0755，同时删除 AppleDouble 元数据文件。不会对整个 rootfs 递归放宽权限，shadow、私钥和服务数据仍按各自配方保持私有。
+
+scripts/check-rootfs-permissions.py 在打包后直接检查 squashfs 元数据，阻止上述目录权限问题进入发布。修复后的完整镜像仍须重新完成 9000 浏览器与 9001 验收；仅编译成功不能提升为正式 Release。
 
 ## 回滚
 

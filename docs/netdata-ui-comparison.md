@@ -1,0 +1,23 @@
+# Netdata 实时监控界面对照
+
+2026-11-20 核查。用户提供的 Bleach OpenWrt 截图是经典 System Overview 仪表盘，本项目截图是带 Nodes、Metrics、Live、AI Insights 的新版仪表盘。仪表盘主体由 Netdata 的网页资源提供，LuCI 负责嵌入入口；不能仅凭相同的 luci-app 包名认定仪表盘版本相同。
+
+| 项目 | 本项目 | 用户提供的第三方固件 |
+| --- | --- | --- |
+| 菜单包 | luci-app-netdata，来源为固定的 ImmortalWrt LuCI JS 入口 | [公开插件列表](https://openwrt.mpdn.fun/?dir=%E6%8F%92%E4%BB%B6%E5%88%97%E8%A1%A8)列出 luci-app-netdata |
+| 仪表盘 | Netdata 2.12.3 的随包 v3 网页资源 | 截图为经典 System Overview；实际 Agent 版本未验证 |
+| 嵌入地址 | 本项目补丁显式改为 http://主机:19999/v3/ | 安装包中的实际地址未验证 |
+| 标题 | 本次补丁将页内标题与菜单统一为实时监控，LuCI 包升为 0.1-r1，翻译包升为 0.1 | 截图的页内标题为实时监控 |
+| 前端资源 | 当前提取的上游发布资产包含根入口和 v3，没有经典 v1 资源目录 | 截图显示经典前端；不能用页脚的前端构建标识推断 Agent 版本 |
+
+本项目的地址和标题改动见 [Netdata LuCI 补丁](../patches/custom-ipv4/netdata-luci-bundled-dashboard.patch)。这是本项目的定制，目的为直接加载打包在本机的网页资源；没有把新版仪表盘重新绘制成经典界面。现有实验 VM 的 /v1/ 实测返回 404，/v1/index.html 会返回新版入口，不能将换一个 URL 当作经典界面已恢复。
+
+[Netdata 官方说明](https://github.com/netdata/netdata/blob/master/docs/dashboards-and-charts/README.md)区分当前和旧版仪表盘入口。[旧 dashboard 仓库](https://github.com/netdata/dashboard)已归档。因此，界面选择与 Agent 更新应分别评估，不能为了截图外观直接降级采集器，也不能承诺当前固件未打包的经典界面已经可用。
+
+Bleach 作者的[公开仓库](https://github.com/bleach1991/lede)当前主分支提供介绍和来源列表，没有公布该截图对应的 luci-app-netdata 构建提交或安装包。尚未完成第三方安装包的逐文件比对；不能将上游相似实现当作第三方实际交付。
+
+## 网页终端
+
+本项目已发布的 APK 清单中包含官方 luci-app-ttyd，版本 26.288.56989~75a306d。底层另有 ttyd 服务。LuCI 的嵌入脚本调整为复用当前协议、主机和终端会话路径；底层 ttyd 补丁增加 LuCI 会话权限、WebSocket Origin 检查、LAN 限制及证书适配。它们分别是入口和服务，不是另造一个终端应用。
+
+已发布清单中的 ttyd 为 1.7.7-r3；待验收的新构建为 1.7.7-r4，增加 uHTTPd DER 证书到运行时 PEM 的适配。查看物理机实际版本时，以该机的 APK 已安装包查询为准，不能将待验收版本当作已经安装。

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
 set -euo pipefail
+umask 022
 
 repo=$(cd -- "$(dirname -- "$0")/.." && pwd)
 if [[ $# != 2 || -e $1 || -e $2 ]]; then
@@ -90,6 +91,12 @@ lmo_src=feeds/luci/modules/luci-base/src
 make -C "$lmo_src" po2lmo
 mkdir -p files/usr/lib/lua/luci/i18n
 "$lmo_src/po2lmo" "$repo/image-files/network-ui/office-menus.zh-cn.po" files/usr/lib/lua/luci/i18n/office-menus.zh-cn.lmo
+# This overlay contains only public, version-controlled defaults and UI files.
+# A cache or archive created with umask 077 must not make / or /usr private.
+find files -type f -name '._*' -delete
+find files -type d -exec chmod 0755 {} +
+find files -type f -perm -u=x -exec chmod 0755 {} +
+find files -type f ! -perm -u=x -exec chmod 0644 {} +
 cp "$repo/profiles/network-ui.config" .config
 make defconfig
 grep -Fx CONFIG_USE_APK=y .config
@@ -117,6 +124,7 @@ manifest=openwrt-x86-64-generic.manifest
 gzip -t "$target/$image"
 rootfs=build_dir/target-x86_64_musl/linux-x86_64/root.squashfs
 unsquash=staging_dir/host/bin/unsquashfs4
+python3 "$repo/scripts/check-rootfs-permissions.py" "$unsquash" "$rootfs"
 "$unsquash" -cat "$rootfs" lib/apk/db/installed > .ui-inputs/installed
 python3 - "$repo/manifests/$manifest" "$target/$manifest" .ui-inputs/installed <<'PY'
 import re
@@ -127,6 +135,8 @@ def versions(path):
 old, new = map(versions, sys.argv[1:3])
 old["kmod-bonding"] = old["kmod-macvlan"]
 old["ttyd"] = "1.7.7-r4"
+old["luci-app-netdata"] = "0.1-r1"
+old["luci-i18n-netdata-zh-cn"] = "0.1"
 old["px5g-mbedtls"] = "11"
 old["openssl-util"] = "3.5.9-r1"
 old["libopenssl-conf"] = "3.5.9-r1"

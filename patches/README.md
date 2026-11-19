@@ -4,7 +4,7 @@
 
 | 组件 | 补丁 |
 | --- | --- |
-| Netdata | [配置权限](custom-ipv4/netdata-config-readable.patch)、[容器网卡采集](custom-ipv4/netdata-container-network.patch)、[LuCI 本地仪表盘](custom-ipv4/netdata-luci-bundled-dashboard.patch) |
+| Netdata | [配置权限](custom-ipv4/netdata-config-readable.patch)、[容器网卡采集](custom-ipv4/netdata-container-network.patch)、[LuCI 本地仪表盘和「实时监控」标题](custom-ipv4/netdata-luci-bundled-dashboard.patch)；LuCI 包 0.1-r1 同步页面标题及中文翻译 |
 | ttyd | [LAN 监听、LuCI 会话、WebSocket 权限校验和 DER/PEM 证书适配](custom-ipv4/ttyd-luci-session.patch)；r4 增加私有运行目录中的 PEM 适配，依赖官方 openssl-util，保留配置中的原证书和私钥 |
 | LuCI | [iptables 后端识别](custom-ipv4/luci-nftables-legacy-warning.patch)、[文件管理样式](custom-ipv4/luci-filemanager-layout.patch) |
 | Tailscale | [Tailscale 文件归属](custom-ipv4/tailscale-file-ownership.patch) |

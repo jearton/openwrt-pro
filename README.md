@@ -57,6 +57,7 @@
 - [Technitium、DNS 分流和升级](docs/technitium.md)
 - [CI、GitHub Packages 与固件下载](docs/releases.md) · [构建产物摘要与 APK 清单](manifests/README.md)
 - [隔离启动验收与 CI 故障记录](docs/ci-acceptance.md)
+- [Netdata 界面与第三方插件对照](docs/netdata-ui-comparison.md)
 - [底座和 feeds 锁定版本](sources.lock.json) · [第三方来源](custom-sources.lock.json)
 
 项目代码采用 GPL-3.0-or-later。各上游组件按其原许可证使用。源码锁和示例配置可公开复用，生成的镜像、软件包签名密钥和 DNS 数据在部署环境独立保管。

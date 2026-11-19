@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/build-firmware.yml'
       - 'scripts/build-full.sh'
+      - 'scripts/check-rootfs-permissions.py'
       - 'scripts/prepare-technitium-luci.sh'
       - '*.lock.json'
       - 'sources/full/**'
