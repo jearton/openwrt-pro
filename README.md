@@ -27,7 +27,7 @@
 | 系统 → 文件管理、文件传输 | 管理和传输路由器文件 | [LuCI File Manager](https://github.com/openwrt/luci/tree/75a306df84a020c57a631ef5b4c02ace56d93387/applications/luci-app-filemanager)、[Lean LuCI](https://github.com/coolsnowwolf/luci/tree/f43c53a60f11f5d635b7127c775e9c04e2be191d) |
 | 系统 → 磁盘管理、分区扩容 | 查看本机磁盘和调整分区 | [DiskMan](https://github.com/sbwml/luci-app-diskman)、[PartExp](https://github.com/sirpdboy/luci-app-partexp) |
 | 系统维护 | 定时重启、关机、释放内存、自定义命令 | [Lean LuCI](https://github.com/coolsnowwolf/luci/tree/f43c53a60f11f5d635b7127c775e9c04e2be191d)、[PoweroffDevice](https://github.com/sirpdboy/luci-app-poweroffdevice)、[LuCI Commands](https://github.com/openwrt/luci/tree/75a306df84a020c57a631ef5b4c02ace56d93387/applications/luci-app-commands) |
-| 服务 → Technitium DNS | 主 DNS、内网域、广告过滤和 DNS 统计 | [Technitium DNS Server](https://github.com/TechnitiumSoftware/DnsServer)、[technitium-console](https://github.com/byGarcia/technitium-console)、[LuCI 插件](https://github.com/jearton/luci-app-technitium) |
+| 服务 → Technitium DNS | 主 DNS、内网域、广告过滤和 DNS 统计；固件默认接管 LAN 的 TCP/UDP 53 请求 | [Technitium DNS Server](https://github.com/TechnitiumSoftware/DnsServer)、[technitium-console](https://github.com/byGarcia/technitium-console)、[LuCI 插件](https://github.com/jearton/luci-app-technitium) |
 | 服务 → AdGuard Home | 可选 DNS 过滤服务，默认停用 | [AdGuard Home](https://github.com/AdguardTeam/AdGuardHome) |
 | 服务 → OpenClash | Mihomo 代理和规则分流 | [OpenClash](https://github.com/vernesong/OpenClash)、[Mihomo](https://github.com/MetaCubeX/mihomo) |
 | 服务 → DDNS-GO | 动态域名更新 | [DDNS-GO](https://github.com/jeessy2/ddns-go)、[LuCI 插件](https://github.com/sirpdboy/luci-app-ddns-go) |

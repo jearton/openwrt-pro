@@ -13,12 +13,15 @@ OpenWrt 完整镜像内置 Technitium DNS 15.6.2、ASP.NET Core 10.0.15 musl x86
 ## DNS 和 OpenClash
 
 - 客户端从 dnsmasq 获取 DHCPv4 租约，DNS 指向路由器的 53 端口，由 Technitium 服务。
+- 固件默认将 LAN 客户端经过路由器的 TCP/UDP 53 请求重定向到本机 53，即使终端手动指定外部普通 DNS，也由本机 Technitium 处理。规则名为 `Force LAN DNS to router`，可在「网络 → 防火墙 → 端口转发」关闭；升级保留已有规则的开关及修改。
 - Technitium 条件转发 `.lan` 和初始化时所在 /24 LAN 的反向区到 `127.0.0.1:5353`，由 dnsmasq 回答租约、静态主机名和 PTR。
 - 公网查询默认走加密上游。自建区域、多个 A 记录、广告拦截列表、白名单和统计在 Technitium 控制台维护。逐条查询日志按需在 Apps 安装 Query Logs (SQLite) 并设置保留期限。
 - OpenClash 默认停用，其 53 端口重定向保持关闭。需要 Fake-IP 时，在 Technitium 的 **Advanced Forwarding** 按客户端源 IP 划分组，只将代理白名单客户端需要 Fake-IP 的域名交给 `127.0.0.1:7874`。其他查询继续走真实 IP 上游。两处白名单使用相同的固定租约地址。
 - OpenClash 配置、订阅凭证、用户内网区域和设备白名单由管理员配置。
 
 修改 LAN 网段或 DHCP 域后，在控制台同步修改条件转发区和反向区。 路由器重启后，动态租约名称随客户端重新取得租约而恢复。如果 dnsmasq 已能回答该名称，Technitium 仍显示 NXDOMAIN，可在控制台的 Cache 删除对应名称和 PTR 的缓存。切换到备用 AdGuard Home 时，先在备用端口确认应答，再在维护窗口停 Technitium 并让 AdGuard Home 接管 LAN 的 53 端口。
+
+强制 DNS 是本固件的 fw4 策略，通用 `luci-app-technitium` 不默认创建它。规则只匹配 LAN 的 IPv4 TCP/UDP 53，保留客户端源 IP，不匹配路由器自身发出的查询或内部 5353/7874 链路。修改 Technitium DNS 监听端口时，同步修改这条规则的目标端口。DoH、DoT、VPN 内的 DNS 和未经过本路由器的流量不由这条规则接管。
 
 ## 从旧镜像升级
 

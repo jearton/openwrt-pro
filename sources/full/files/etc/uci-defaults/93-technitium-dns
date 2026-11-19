@@ -19,6 +19,23 @@ set firewall.technitium_wan.dest_port='53 5380'
 set firewall.technitium_wan.target='REJECT'
 UCI
 
+# Preserve the administrator's enable/disable choice across firmware upgrades.
+# With no destination IP, fw4 emits a local redirect and keeps the client IP.
+if ! uci -q get firewall.technitium_dns_redirect >/dev/null; then
+	uci batch <<'UCI'
+set firewall.technitium_dns_redirect=redirect
+set firewall.technitium_dns_redirect.name='Force LAN DNS to router'
+set firewall.technitium_dns_redirect.src='lan'
+set firewall.technitium_dns_redirect.proto='tcp udp'
+set firewall.technitium_dns_redirect.src_dport='53'
+set firewall.technitium_dns_redirect.dest_port='53'
+set firewall.technitium_dns_redirect.target='DNAT'
+set firewall.technitium_dns_redirect.family='ipv4'
+set firewall.technitium_dns_redirect.reflection='0'
+set firewall.technitium_dns_redirect.enabled='1'
+UCI
+fi
+
 # dnsmasq does not announce DNS when it listens away from port 53.
 # Its 0.0.0.0 placeholder resolves to the DHCP-facing router address.
 if uci -q get dhcp.lan >/dev/null; then

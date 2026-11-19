@@ -30,6 +30,7 @@
 | Netdata | 本地仪表盘可获取；charts API 包含 system.cpu |
 | Technitium Console | 服务返回已打包的现代控制台入口 |
 | DNS | 外部 LAN 客户端的 UDP/TCP A 查询返回 LAN 地址，PTR 查询返回 openwrt.lan |
+| 强制 DNS | 指定不可达的外部 DNS 地址仍取得本机答案；规则计数增加，Technitium 统计保留独立客户端源 IP；关闭规则后停止接管，重启用后恢复；重跑首启默认值保留关闭状态 |
 | 终端 | 未登录、伪造 token、错误 Origin 的 WebSocket 均被拒绝；合法 LuCI 会话可打开终端并实际执行命令 |
 | HTTP/HTTPS 会话 | 两种登录态分别可用，HTTPS 会话不能回退用于 HTTP 终端 |
 | 包与内核 | 包版本只允许声明过的变化；所有 kmod 依赖与镜像内核 ABI 一致 |

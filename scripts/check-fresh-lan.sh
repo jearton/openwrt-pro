@@ -160,4 +160,5 @@ with closing(connect(cookie)) as terminal:
     else:
         raise AssertionError('LuCI session did not open a root shell')
 PY
+python3 "$repo/scripts/lan-vm.py" forced-dns "$test_dir"
 echo 'Fresh isolated IPv4 boot verified LuCI, Netdata, authorized ttyd, and the Technitium console and DNS on UDP/TCP'

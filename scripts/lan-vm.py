@@ -3,6 +3,7 @@
 """Manage only the disposable, isolated CI VM used by check-fresh-lan."""
 
 from pathlib import Path
+import re
 import socket
 import subprocess
 import sys
@@ -109,6 +110,9 @@ mkdir -p /tmp/technitium-test
     guest.run("""
 apk --no-network --repositories-file /dev/null --allow-untrusted add /tmp/technitium-test/*.apk
 /etc/init.d/technitium stop
+""")
+    guest.run((repo / "sources/full/files/etc/uci-defaults/93-technitium-dns").read_text())
+    guest.run("""
 mv /etc/technitium /root/technitium-before-ci-firstboot
 /etc/init.d/technitium enable
 /etc/init.d/technitium-provision enable
@@ -120,6 +124,53 @@ mv /etc/technitium /root/technitium-before-ci-firstboot
         pass
     guest.wait(previous_boot=boot)
     print("The new packages and firmware initializer are running with fresh DNS state.", flush=True)
+
+
+def forced_dns(guest):
+    # TEST-NET-3 is deliberately unreachable beyond this isolated namespace.
+    subprocess.run(["ip", "addr", "add", "192.168.1.3/32", "dev", "lan-test"], check=True)
+    subprocess.run(["ip", "route", "add", "203.0.113.53/32", "via", "192.168.1.1", "dev", "lan-test"], check=True)
+
+    def query(tcp=False):
+        command = ["dig", "-b", "192.168.1.3", "@203.0.113.53", "openwrt.lan", "A",
+                   "+short", "+time=2", "+tries=1"]
+        if tcp:
+            command.append("+tcp")
+        result = subprocess.run(command, capture_output=True, text=True, timeout=5)
+        return result.returncode == 0 and result.stdout.strip() == "192.168.1.1"
+
+    assert query() and query(tcp=True), "An explicitly selected external resolver was not redirected"
+    counters = guest.run("nft list chain inet fw4 dstnat_lan")
+    hits = re.findall(r'counter packets (\d+).*comment "!fw4: Force LAN DNS to router"', counters)
+    assert hits and sum(map(int, hits)) >= 2, "The LAN DNS redirect counters did not increase"
+    # This source IP is used only for forced queries, so its statistics prove
+    # that the application received the original client address without SNAT.
+    guest.run(r"""
+token=$(curl -fsS --max-time 5 -G http://127.0.0.1:5380/api/user/login \
+  --data-urlencode user=admin --data-urlencode pass@/etc/technitium/setup-password | jsonfilter -e '@.token')
+test -n "$token"
+trap 'curl -fsS --max-time 5 -H "Authorization: Bearer $token" http://127.0.0.1:5380/api/user/logout >/dev/null' EXIT
+for attempt in $(seq 1 16); do
+    if curl -fsS --max-time 5 -G -H "Authorization: Bearer $token" \
+      http://127.0.0.1:5380/api/dashboard/stats/getTop \
+      --data-urlencode type=LastHour --data-urlencode statsType=TopClients --data-urlencode noReverseLookup=true |
+      jsonfilter -e '@.response.topClients[*].name' | grep -qx 192.168.1.3; then
+        exit 0
+    fi
+    sleep 5
+done
+exit 1
+""", timeout=100)
+    guest.run("uci set firewall.technitium_dns_redirect.enabled=0\nuci commit firewall\n/etc/init.d/firewall reload")
+    try:
+        defaults = Path(__file__).resolve().parent.parent / "sources/full/files/etc/uci-defaults/93-technitium-dns"
+        guest.run(defaults.read_text())
+        guest.run("test \"$(uci -q get firewall.technitium_dns_redirect.enabled)\" = 0")
+        assert not query() and not query(tcp=True), "The disabled redirect still accepted external DNS requests"
+    finally:
+        guest.run("uci set firewall.technitium_dns_redirect.enabled=1\nuci commit firewall\n/etc/init.d/firewall reload")
+    assert query() and query(tcp=True), "Restoring the DNS redirect failed"
+    print("Forced UDP/TCP DNS increments firewall counters and preserves the original client IP; disabling, upgrade preservation and re-enabling work.", flush=True)
 
 
 def diagnose(guest):
@@ -171,6 +222,8 @@ if __name__ == "__main__":
     elif action == "check-ipv4":
         guest.run("grep -Eq '(^| )ipv6.disable=1( |$)' /proc/cmdline\ntest ! -s /proc/net/if_inet6")
         print("The guest kernel has IPv6 disabled and no IPv6 interface addresses.", flush=True)
+    elif action == "forced-dns":
+        forced_dns(guest)
     elif action == "fixture":
         fixture(guest, Path(sys.argv[3]), Path(__file__).resolve().parent.parent, Path(sys.argv[4]))
     elif action == "diagnose":
