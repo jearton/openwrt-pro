@@ -1,12 +1,13 @@
 diff --git a/package/custom/luci-app-netdata/Makefile b/package/custom/luci-app-netdata/Makefile
 --- a/package/custom/luci-app-netdata/Makefile
 +++ b/package/custom/luci-app-netdata/Makefile
-@@ -6,6 +6,8 @@
+@@ -6,6 +6,9 @@
  
  LUCI_TITLE:=LuCI support for Netdata
  LUCI_DEPENDS:=+netdata
 +PKG_VERSION:=0.1
 +PKG_RELEASE:=1
++PKG_PO_VERSION:=0.1
  
  include $(TOPDIR)/feeds/luci/luci.mk
  
