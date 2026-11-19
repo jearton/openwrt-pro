@@ -67,6 +67,8 @@ ttyd 补丁 r4 通过官方 openssl-util 将配置中的 DER 或 PEM 证书和�
 - 输入错误时停止启动，不降低 LuCI 会话和 WebSocket 权限要求。
 - EC/RSA、DER/PEM 四种组合及错误输入均由实际 OpenSSL 转换验证。
 
+修复后的[隔离回归任务](https://github.com/jearton/openwrt-pro/actions/runs/44547973505)于 2026-11-19 通过：LuCI HTTP/HTTPS 登录、Technitium 控制台、Netdata 图表 API、LAN 的 UDP/TCP A 和 PTR、终端页面及实际 shell 命令全部通过；未登录、伪造会话和错误 Origin 的 WebSocket 被拒绝，HTTPS 会话经 HTTP 访问终端也被拒绝。guest 的 IPv6 内核禁用参数和无 IPv6 地址均已检查。这是初始化回归结果，完整新镜像仍由独立构建任务另行验收。
+
 ## 回滚
 
 固件或配置修复未通过时不提升为正式发布，保留已有 Release 和 SHA256。源码可用新的 revert 提交回退；不要替换已有发布镜像的内容。每次修复均以新构建和新临时磁盘重新验收。
