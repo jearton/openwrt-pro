@@ -154,12 +154,14 @@ diff --git a/utils/ttyd/files/ttyd-login b/utils/ttyd/files/ttyd-login
 new file mode 100755
 --- /dev/null
 +++ b/utils/ttyd/files/ttyd-login
-@@ -0,0 +1,9 @@
+@@ -0,0 +1,11 @@
 +#!/bin/sh
 +# SPDX-License-Identifier: GPL-3.0-or-later
 +
 +if ! awk -F: '$1 == "root" && $2 != "" && $2 !~ /^[!*]/ { ready = 1 } END { exit !ready }' /etc/shadow; then
 +	printf '%s\n' 'Set a system password in LuCI before using the terminal.'
++	printf '%s\n' 'Press Enter to close this terminal.'
++	IFS= read -r terminal_reply || true
 +	exit 1
 +fi
 +

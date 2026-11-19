@@ -31,11 +31,16 @@ def check(cookies, password_file, mode):
                 frame = terminal.recv()
             except websocket.WebSocketConnectionClosedException:
                 break
+            except websocket.WebSocketTimeoutException:
+                continue
             if isinstance(frame, bytes) and frame.startswith(b"0"):
                 output += frame[1:]
                 if expected in output:
                     return output
-        raise AssertionError("Terminal did not reach the expected authentication stage")
+        raise AssertionError("Terminal did not reach the expected authentication stage; "
+                             f"login_prompt={b'login:' in output}, "
+                             f"password_prompt={b'Password:' in output}, "
+                             f"shell_prompt={b'root@OpenWrt' in output}")
 
     if mode == "empty":
         with closing(connect()) as terminal:

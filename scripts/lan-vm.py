@@ -188,6 +188,9 @@ ubus call service list '{"name":"technitium-provision"}'
 test -e /etc/technitium/provisioned && echo INITIALIZATION_COMPLETE
 printf '\nListening sockets\n'
 netstat -lntup
+printf '\nTerminal authentication command\n'
+uci -q get ttyd.@ttyd[0].command
+uci -q get ttyd.@ttyd[0].luci_auth
 printf '\nLAN and dnsmasq configuration\n'
 uci -q get network.lan.ipaddr
 uci -q show dhcp
