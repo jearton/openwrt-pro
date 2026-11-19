@@ -1,0 +1,47 @@
+name: Reproduce Technitium first boot
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/check-technitium.yml'
+      - 'scripts/check-fresh-lan.sh'
+      - 'scripts/lan-vm.py'
+      - 'sources/full/files/**technitium**'
+
+permissions:
+  contents: read
+
+jobs:
+  firstboot:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Prepare isolated VM tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -qy --no-install-recommends qemu-system-x86 ovmf python3-websocket dnsutils
+          if test -c /dev/kvm; then
+            sudo chown "$(id -u)" /dev/kvm
+            test -r /dev/kvm && test -w /dev/kvm
+          fi
+      - name: Fetch checksum-pinned regression image and released APKs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/technitium-apks"
+          gh release download v25.12.6-20261118 --repo jearton/openwrt-pro \
+            --pattern openwrt-x86-64-generic-squashfs-combined-efi.img.gz --dir "$RUNNER_TEMP"
+          printf '%s  %s\n' 676599499413774b57b0f728a16d00a2929e2234ac6be9693705b083471638cf \
+            "$RUNNER_TEMP/openwrt-x86-64-generic-squashfs-combined-efi.img.gz" | sha256sum --strict -c -
+          gh release download v1.1.0 --repo jearton/luci-app-technitium \
+            --pattern '*.apk' --pattern SHA256SUMS --pattern packages.adb --dir "$RUNNER_TEMP/technitium-apks"
+          (cd "$RUNNER_TEMP/technitium-apks" && sha256sum --strict -c SHA256SUMS)
+      - name: Reproduce first initialization and check LAN services
+        env:
+          FRESH_LAN_FIXTURE_APKS: ${{ runner.temp }}/technitium-apks
+        run: bash scripts/check-fresh-lan.sh "$RUNNER_TEMP/openwrt-x86-64-generic-squashfs-combined-efi.img.gz"
