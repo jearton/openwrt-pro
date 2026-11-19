@@ -16,6 +16,8 @@ cleanup() {
             printf 'Guest endpoint %s returned HTTP %s\n' "$endpoint" "$code"
         done
         dig @127.0.0.1 -p 10553 openwrt.lan A +short +time=1 +tries=1 || true
+        dig @127.0.0.1 -p 10553 openwrt.lan A +short +tcp +time=2 +tries=1 || true
+        tcpdump -nn -r "$test_dir/lan.pcap" 'udp port 53 or tcp port 53' 2>/dev/null | tail -n 15 || true
     fi
     if [[ -n $vm_pid ]]; then
         kill "$vm_pid" 2>/dev/null || :
@@ -48,7 +50,8 @@ qemu-system-x86_64 -machine q35 -accel kvm -accel tcg -smp 2 -m 1024 \
     -drive if=pflash,format=raw,readonly=on,file=/usr/share/OVMF/OVMF_CODE_4M.fd \
     -drive "if=pflash,format=raw,file=$test_dir/vars.fd" \
     -drive "if=ide,format=raw,file=$test_dir/disk.img" \
-    -netdev "$lan" -device e1000,netdev=lan &
+    -netdev "$lan" -device e1000,netdev=lan \
+    -object "filter-dump,id=lan-capture,netdev=lan,file=$test_dir/lan.pcap" &
 vm_pid=$!
 python3 "$repo/scripts/lan-vm.py" bootstrap "$test_dir"
 if [[ -n ${FRESH_LAN_FIXTURE_APKS:-} ]]; then

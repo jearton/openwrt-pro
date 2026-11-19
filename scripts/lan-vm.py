@@ -140,7 +140,12 @@ for logfile in /tmp/technitium-logs/*.log; do
 done
 printf '\nLocal DNS queries\n'
 timeout 6 nslookup openwrt.lan 127.0.0.1
+timeout 6 nslookup openwrt.lan 192.168.1.1
 timeout 6 nslookup openwrt.lan 127.0.0.1:5353
+printf '\nLAN firewall and routes\n'
+nft list chain inet fw4 input
+nft list chain inet fw4 input_lan
+ip -4 route
 printf '\nNative DNS configuration via API\n'
 token=$(curl -fsS --max-time 5 -G http://127.0.0.1:5380/api/user/login \
   --data-urlencode user=admin --data-urlencode pass@/etc/technitium/setup-password | jsonfilter -e '@.token')

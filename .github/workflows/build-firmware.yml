@@ -8,7 +8,6 @@ on:
       - '.github/workflows/build-firmware.yml'
       - 'scripts/build-full.sh'
       - 'scripts/prepare-technitium-luci.sh'
-      - 'scripts/check-fresh-lan.sh'
       - '*.lock.json'
       - 'sources/full/**'
       - 'profiles/network-ui.config'
@@ -65,7 +64,7 @@ jobs:
 
       - name: Boot the new image and check LAN services
         run: |
-          sudo apt-get install -qy --no-install-recommends qemu-system-x86 ovmf python3-websocket dnsutils
+          sudo apt-get install -qy --no-install-recommends qemu-system-x86 ovmf python3-websocket dnsutils tcpdump
           if test -c /dev/kvm; then
             sudo chown "$(id -u)" /dev/kvm
             test -r /dev/kvm && test -w /dev/kvm
