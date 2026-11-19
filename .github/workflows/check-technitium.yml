@@ -41,6 +41,13 @@ jobs:
           gh release download v1.1.0 --repo jearton/luci-app-technitium \
             --pattern '*.apk' --pattern SHA256SUMS --pattern packages.adb --dir "$RUNNER_TEMP/technitium-apks"
           (cd "$RUNNER_TEMP/technitium-apks" && sha256sum --strict -c SHA256SUMS)
+          # The old regression image did not include a TLS certificate generator.
+          # This helper is test-only; the final image builds px5g from its pinned OpenWrt source.
+          curl -fLsS --retry 3 --max-time 60 \
+            https://downloads.openwrt.org/releases/25.12.6/packages/x86_64/base/px5g-mbedtls-13.apk \
+            -o "$RUNNER_TEMP/technitium-apks/px5g-mbedtls-13.apk"
+          printf '%s  %s\n' 76cd0142c88ee9c8d41d733419e764f47b1a6a147382f74a43e50be457d2faea \
+            "$RUNNER_TEMP/technitium-apks/px5g-mbedtls-13.apk" | sha256sum --strict -c -
       - name: Reproduce first initialization and check LAN services
         env:
           FRESH_LAN_FIXTURE_APKS: ${{ runner.temp }}/technitium-apks

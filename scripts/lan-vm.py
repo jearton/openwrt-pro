@@ -96,7 +96,7 @@ until test -e /etc/technitium/provisioned; do sleep 1; done
 mkdir -p /tmp/technitium-test
 """, timeout=150)
     apks = list(packages.glob("*.apk"))
-    assert len(apks) == 3
+    assert len(apks) == 4  # Three released Technitium APKs plus a test TLS helper.
     guest.upload(apks)
     # These two source files share a basename, so stream them to distinct paths.
     for source, target in [("etc/init.d/technitium-provision", "/etc/init.d/technitium-provision"),
