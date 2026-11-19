@@ -44,7 +44,7 @@ make -j"$(nproc)" V=s
 | [Tailscale 文件归属](../patches/custom-ipv4/tailscale-file-ownership.patch) | 由 LuCI 插件提供服务和配置文件，避免重复归属。 |
 | [Technitium 独立配方](https://github.com/jearton/luci-app-technitium/tree/v1.1.0/technitium) · [源码锁](../technitium-luci.lock.json) | 统一引入后台包和 LuCI 包，固定服务器、musl 运行时、控制台和 Advanced Forwarding 的版本和校验值。 |
 | [LuCI 来源锁定](../technitium-luci.lock.json) | 固定独立 Technitium 管理插件的提交。 |
-| [终端授权和证书适配](../patches/custom-ipv4/ttyd-luci-session.patch) | ttyd 绑定 LAN，校验 LuCI 终端写权限、WebSocket 来源及持续会话。r4 适配 DER/PEM 证书；r5 在 LuCI 授权之后增加每次系统登录，拒绝空密码，并将旧的直接 shell 命令迁移为登录入口。 |
+| [终端授权和证书适配](../patches/custom-ipv4/ttyd-luci-session.patch) | ttyd 绑定 LAN，校验 LuCI 终端写权限、WebSocket 来源及持续会话。r4 适配 DER/PEM 证书；r5 在 LuCI 授权之后增加每次系统登录，拒绝空密码，并将旧的直接 shell 命令迁移为登录入口。r6 将 LuCI 终端 TLS 的 ALPN 限定为 HTTP/1.1，修复 Chrome HTTP/2 下的来源误拒绝。 |
 | [启动时配置](../sources/full/files/etc/uci-defaults/92-custom-ipv4) | 保留 Netdata 和 ttyd 的开机启动。 |
 
 升级前更新来源锁和校验和。先对目标源码执行 `git apply --check`，再构建并比较 manifest 差异。保留前一版 APK、系统盘和路由器配置备份。

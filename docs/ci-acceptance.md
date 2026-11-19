@@ -100,4 +100,4 @@ scripts/check-rootfs-permissions.py 在打包后直接检查 squashfs 元数据�
 
 r6 只在 LuCI 授权的 TLS 监听设置 ALPN 为 http/1.1，保留来源、LuCI 会话和系统登录三项检查。使用 libwebsockets 的 [alpn 字段](https://libwebsockets.org/lws-api-doc-v4.0-stable/html/structlws__context__creation__info.html)，不要求用户关闭 Chrome 的 HTTP/2。完整镜像 CI 新增 TLS 协商检查，客户端同时提供 h2 和 http/1.1 时必须选中 http/1.1。历史镜像初始化 fixture 不替换 ttyd 二进制，故不以该 fixture 代替此检查。
 
-失败的 r5 完整镜像不作为正式发布；待 r6 全新镜像重新完成浏览器与 DNS 验收后记录最终结果。
+失败的 r5 完整镜像不作为正式发布。r6 完整镜像已在全新磁盘通过 Mac Chrome HTTP/HTTPS 终端、Netdata、Console、9001 DNS 和重启验收；最终 SHA256、截图与检查边界见[正式验收记录](acceptance-20261120.md)。

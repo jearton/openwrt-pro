@@ -2,6 +2,8 @@
 
 基于 OpenWrt 25.12.6 x86/64 的 IPv4 路由器定制方案。使用 APK，内置 LuCI、实时监控和原生 Technitium DNS。默认禁用 IPv6，镜像验收使用独立实验 LAN。AdGuard Home 随镜像提供，默认停用。
 
+最新发布：[v25.12.6-20261120](https://github.com/jearton/openwrt-pro/releases/tag/v25.12.6-20261120)。含 `kmod-bonding`，Netdata、ttyd 默认自启；终端每次要求系统登录并填满窗口剩余高度。查看[本次验收与 Mac 截图](docs/acceptance-20261120.md)及[补丁清单](patches/README.md)。
+
 ## 功能清单
 
 ### OpenWrt 原生功能
