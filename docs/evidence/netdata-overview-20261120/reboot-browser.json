@@ -2,5 +2,6 @@
   "status": "passed",
   "customization_survives_offline_router_reboot": true,
   "anonymous": true,
-  "live_cpu_values": true
+  "live_cpu_values": true,
+  "local_interface_table_after_reboot": true
 }

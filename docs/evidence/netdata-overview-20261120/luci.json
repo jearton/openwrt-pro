@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "title": "实时监控",
+  "src": "http://127.0.0.1:19999/openwrt-overview/?v=2.13.0-2",
+  "nativeUrl": "http://127.0.0.1:19999/v3/spaces/openwrt/rooms/local/dashboard#metrics_correlation=false&after=-900&before=0&modal=&modalTab=",
+  "anonymous": true,
+  "cloud_account_id": null,
+  "external_requests": [],
+  "native_customization_saved": true
+}

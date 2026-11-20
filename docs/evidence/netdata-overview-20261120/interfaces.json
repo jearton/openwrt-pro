@@ -1,0 +1,98 @@
+{
+  "status": "passed",
+  "scope": "Guest-only isolated bridge/bond/VLAN/veth/WireGuard/IFB fixtures; no production interfaces changed",
+  "initial_interfaces": [
+    "lo",
+    "eth0",
+    "eth1",
+    "br-lan"
+  ],
+  "discovered_interfaces": [
+    "lo",
+    "eth0",
+    "eth1",
+    "br-lan",
+    "bond-qa",
+    "ndm0",
+    "ndm1",
+    "bond-qa.88",
+    "wg-qa",
+    "ifb4qa"
+  ],
+  "rates": {
+    "lo": {
+      "type": "virtual",
+      "rx_mbps": 0,
+      "tx_mbps": 0,
+      "state": "unknown"
+    },
+    "eth0": {
+      "type": "physical",
+      "rx_mbps": 0.0399362,
+      "tx_mbps": 0.1112354,
+      "state": "up"
+    },
+    "eth1": {
+      "type": "physical",
+      "rx_mbps": 0,
+      "tx_mbps": 0,
+      "state": "down"
+    },
+    "br-lan": {
+      "type": "virtual",
+      "rx_mbps": 0.0382363,
+      "tx_mbps": 0.1112251,
+      "state": "up"
+    },
+    "bond-qa": {
+      "type": "virtual",
+      "rx_mbps": 0.0066123,
+      "tx_mbps": 4.2010812,
+      "state": "up"
+    },
+    "ndm0": {
+      "type": "virtual",
+      "rx_mbps": 0.0066122,
+      "tx_mbps": 4.2010467,
+      "state": "up"
+    },
+    "ndm1": {
+      "type": "virtual",
+      "rx_mbps": 0,
+      "tx_mbps": 0,
+      "state": "up"
+    },
+    "bond-qa.88": {
+      "type": "virtual",
+      "rx_mbps": 0.0051762,
+      "tx_mbps": 4.2010386,
+      "state": "up"
+    },
+    "wg-qa": {
+      "type": "virtual",
+      "rx_mbps": 0,
+      "tx_mbps": 0,
+      "state": "unknown"
+    },
+    "ifb4qa": {
+      "type": "virtual",
+      "rx_mbps": 0,
+      "tx_mbps": 0,
+      "state": "down"
+    }
+  },
+  "native_table_discovered_without_reload": true,
+  "history_devices": [
+    "eth0",
+    "eth1",
+    "lo",
+    "br-lan",
+    "bond-qa",
+    "bond-qa.88",
+    "wg-qa",
+    "ndm0",
+    "ndm1",
+    "ifb4qa"
+  ],
+  "fixture_cleanup": "passed"
+}

@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "guest_temporary_ssh_key_revoked": true,
+  "pve_ephemeral_key_files_deleted": true,
+  "prototype_agent_stopped": true,
+  "pve_loopback_proxy_stopped": true,
+  "owned_ssh_masters_closed": true,
+  "mac_temporary_loopback_ports_closed": true
+}

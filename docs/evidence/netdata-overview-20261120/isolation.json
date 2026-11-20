@@ -1,13 +1,12 @@
 {
   "status": "passed",
   "other_vm_configs_unchanged": 13,
-  "client_9001_unchanged_and_stopped": true,
+  "client_operational_settings_and_power_unchanged": true,
+  "client_notes_readback_format_changed": "qm config returned description: rather than comment lines; runtime settings unchanged",
   "host_routes_unchanged": true,
-  "isolated_bridge_members": [
-    "owrt9000p",
-    "tap9000i0"
-  ],
-  "router_disk": "vm-9000-disk-19.raw",
-  "original_disk_retained": "vm-9000-disk-16.raw",
-  "wan_link_restored": true
+  "isolated_bridge_without_physical_uplink": true,
+  "management_namespace_no_default_route": true,
+  "final_disk": "vm-9000-disk-21.raw",
+  "original_disk_16_retained": true,
+  "wan_test_link_restored": true
 }

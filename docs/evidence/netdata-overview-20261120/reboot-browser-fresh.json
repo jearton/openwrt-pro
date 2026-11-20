@@ -1,0 +1,90 @@
+{
+  "entry": "http://127.0.0.1:19999/openwrt-overview/?v=2.13.0-2",
+  "externalRequests": [],
+  "cases": [
+    {
+      "name": "fresh anonymous browser, offline resources, native charts and live data",
+      "status": "passed",
+      "values": {
+        "system.cpu": {
+          "labels": [
+            "time",
+            "guest_nice",
+            "guest",
+            "steal",
+            "softirq",
+            "irq",
+            "user",
+            "system",
+            "nice",
+            "iowait"
+          ],
+          "rows": 3
+        },
+        "system.ram": {
+          "labels": [
+            "time",
+            "free",
+            "used",
+            "cached",
+            "buffers"
+          ],
+          "rows": 3
+        },
+        "system.io": {
+          "labels": [
+            "time",
+            "reads",
+            "writes"
+          ],
+          "rows": 3
+        },
+        "system.net": {
+          "labels": [
+            "time",
+            "received",
+            "sent"
+          ],
+          "rows": 3
+        }
+      },
+      "cards": 21
+    },
+    {
+      "name": "anonymous native interface table and separate per-instance RX/TX curves",
+      "status": "passed",
+      "interfaces": [
+        "lo",
+        "eth0",
+        "eth1",
+        "br-lan"
+      ]
+    },
+    {
+      "name": "native editor save and repeat entry preserve customized layout",
+      "status": "passed"
+    },
+    {
+      "name": "second empty browser storage automatically loads the same preset",
+      "status": "passed"
+    },
+    {
+      "name": "local interface function rebinding retains customized dashboard",
+      "status": "passed"
+    },
+    {
+      "name": "intentionally empty saved layout is not overwritten",
+      "status": "passed"
+    },
+    {
+      "name": "unknown existing cache fails visibly without data loss",
+      "status": "passed"
+    },
+    {
+      "name": "denied browser storage offers recovery instead of blank native dashboard",
+      "status": "passed"
+    }
+  ],
+  "pageErrors": [],
+  "status": "passed"
+}
