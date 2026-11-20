@@ -444,7 +444,10 @@
         ]
       ],
       "acceptedParams": [],
-      "columnVisibility": {},
+      "columnVisibility": {
+        "Summary": false,
+        "UsedBy": false
+      },
       "sortColumn": "",
       "sortDirection": "descending",
       "sortedColumns": [],
@@ -462,6 +465,9 @@
         "top": 34.5,
         "width": 12,
         "height": 10
+      },
+      "columnSizing": {
+        "Interface": 180
       }
     },
     {

@@ -99,6 +99,7 @@ async function cache(page, replacement) {
     await a.page.getByTestId('dashboardGrid').evaluate(el => { el.scrollTop = 1500; });
     await a.page.getByText('全部网络接口 · 实时流量', {exact: true}).waitFor();
     await a.page.getByText('lo', {exact: true}).first().waitFor();
+    assert.equal(await a.page.getByText('Summary', {exact: true}).count(), 0, 'Hide the raw duplicate summary column');
     await a.page.screenshot({path: path.join(out, 'interfaces.png')});
     await a.page.getByTestId('dashboardGrid').evaluate(el => { el.scrollTop = el.scrollHeight; });
     await a.page.getByText('逐接口 接收 RX', {exact: true}).waitFor();
