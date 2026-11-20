@@ -1,67 +1,81 @@
-# Netdata 预置概览：实现与最终镜像验收
+# Netdata 原生概览与逐接口流量验收
 
-本轮完成了 Netdata 的本地模板初始化，保留 **2.13.0 原生 Dashboard 和原生图表渲染器**。LuCI「系统 → 实时监控」默认打开六仪表、CPU、内存、磁盘、网络和传感器分组的 System Overview。
+[v25.12.6-20261120.2](https://github.com/jearton/openwrt-pro/releases/tag/v25.12.6-20261120.2) 保留 **Netdata 2.13.0 原生 Dashboard、图表渲染器和编辑器**，通过随固件打包的模板初始化每个新浏览器。LuCI「系统 → 实时监控」默认显示 System Overview、六仪表、CPU、内存、磁盘、网络和传感器分组。
 
-此前[原生能力验证](netdata-native-dashboard-validation-20261120.md)中“换浏览器自动读取布局”未通过；本轮新增初始化适配后通过。不是把此前失败改写为成功，也没有恢复已归档的旧版前端。
+此前[原生能力验证](netdata-native-dashboard-validation-20261120.md)中“换浏览器自动读取布局”未通过；本轮补齐初始化后通过。未恢复已归档的旧版前端。先前 r4 的草稿制品没有发布，本次最终制品为 r5，包含逐接口增强。
+
+## 网络部分
+
+- 原生 `network-interfaces` 表格分别显示每个接口的收发速率、包速率、丢包和状态；可按名称、类型筛选和排序。接口名较长时可调整原生列宽。
+- 两张原生曲线分别显示 **逐接口 RX、逐接口 TX**，按 `net.net` 的 instance 分组，不把全部接口压成一个总量。
+- 物理口、网桥、VLAN、veth、隧道、bond 聚合口与成员口各自呈现。原生 Type 列区分 physical / virtual，具体接口按名称识别，不将网桥、bond、VLAN伪装成物理接口。
+- 新增接口自动发现，无须重新导入布局。保留 `lo`、IFB 等默认会被跳过的接口；部分新虚拟接口存在上游 **40 秒发现延迟**，未修改采集核心来绕过该机制。
+- 同一数据包会经过物理口、bond、VLAN、网桥等多层，**不能直接相加当作总流量**。
+
+最终镜像的隔离实验在页面已经打开后创建 bond、两个 veth 成员、VLAN、WireGuard 和 IFB。表格与历史曲线自动发现全部 10 个接口；4 Mbit/s TCP 试验中，bond、VLAN 和活动成员分别采到 4.20 Mbit/s，备用成员和未发流量的接口为 0。测试后删除全部临时接口、命名空间及 iperf 进程，网络、防火墙、DHCP 配置摘要保持不变。[逐接口证据](evidence/netdata-overview-20261120/interfaces.json)。
+
+![最终镜像：各接口实时流量](images/netdata-overview-20261120/interfaces-live.png)
+
+![最终镜像：逐接口 RX/TX 曲线](images/netdata-overview-20261120/interfaces-curves.png)
 
 ## 实现与升级维护
 
-- [preset.json](../packages/netdata/files/overview/preset.json) 随固件提供默认布局；[bootstrap.js](../packages/netdata/files/overview/bootstrap.js) 在原生应用启动前初始化当前浏览器的 IndexedDB，然后进入原生 Dashboard。
-- 两个全新浏览器分别自动获得相同预置布局。**个人修改仍在各自浏览器保存，不跨浏览器同步**；重新进入入口或重启路由器不会覆盖已保存布局，包括主动清空的布局。
-- 只初始化原生未保存的空白记录。遇到未知存储格式或存储被禁用时显示重试和完整指标页入口，不静默覆盖数据。
-- 适配固定于 Netdata 2.13.0 的原生缓存结构和路由规则。默认主机名 OpenWrt 对应原生 slug `openwrt`，不能直接把显示名称拼入路由。
-- [资源准备脚本](../packages/netdata/prepare-overview.py) 将页面资源限制为本地来源，并补齐原生字体的根路径；不修改原生 JS 渲染代码。浏览器对云、registry 等外部资源的尝试由 CSP 阻断，不影响本地图表。
-- [提取脚本](../packages/netdata/extract-asset.sh) 解析 makeself 资产声明的边界，不执行上游安装器；2.13.0 的头部为 838 行。
-- [概览打包补丁](../patches/custom-ipv4/netdata-overview.patch) 将初始化文件打进 Netdata 2.13.0-r4；[LuCI 补丁](../patches/custom-ipv4/netdata-luci-bundled-dashboard.patch) 升为 0.1-r2，标题为“实时监控”，默认入口包含资源版本标识。
+[preset.json](../packages/netdata/files/overview/preset.json) 提供版本 2 模板；[bootstrap.js](../packages/netdata/files/overview/bootstrap.js) 在原生应用启动前初始化 IndexedDB，再进入本机原生 Dashboard。默认 OpenWrt 主机名对应原生 slug `openwrt`，不能直接将显示名称拼入路由。
 
-后续升级核心时必须重新验证原生缓存结构、空间 slug 和图表参数；仅修改版本号不足以确认兼容。[浏览器验收脚本](../scripts/check-netdata-overview.cjs)和 [CI 工作流](../.github/workflows/check-netdata.yml)会运行真实原生页面，检查新浏览器初始化、实时 API 数值、原生编辑保存和存储失败回退。
+两个空白浏览器会获得相同模板。个人修改在各浏览器独立保存，**不跨浏览器同步**。原生 Save 后的布局、主动清空的布局均保留；升级模板不会覆盖已有个人布局。未知缓存结构或禁用存储时显示恢复入口，不静默覆盖记录。
+
+接口函数卡必须绑定当前 Agent 的节点 ID。初始化动态读取本机 ID；后续身份变化时，只重新绑定属于本模板、仍指向此前本机的函数卡，不重置个人布局或覆盖用户手动选择的其他节点。
+
+[资源准备脚本](../packages/netdata/prepare-overview.py) 限制页面资源为本地来源，补齐原生字体的根路径；不改原生 JS 渲染代码。云、registry 等外部资源由 CSP 阻断，不影响本地图表。[资产提取脚本](../packages/netdata/extract-asset.sh) 仅解析 makeself 声明的边界，不执行上游安装器。
+
+[概览补丁](../patches/custom-ipv4/netdata-overview.patch) 将资源打进 **Netdata 2.13.0-r5**；[LuCI 补丁](../patches/custom-ipv4/netdata-luci-bundled-dashboard.patch) 为 **0.1-r3**，统一“实时监控”标题和默认地址。接口采集设置位于 [netdata.conf](../packages/netdata/files/netdata.conf)。完整定制见[补丁索引](../patches/README.md)。
+
+核心升级后必须重新验证原生缓存结构、路由、图表参数和函数节点绑定。[浏览器验收脚本](../scripts/check-netdata-overview.cjs)与[CI](../.github/workflows/check-netdata.yml)运行真实原生页面，等待有效采样后检查，不把 HTTP 200 当作实时图表通过。
 
 ## 最终制品
 
-[v25.12.6-20261120.1](https://github.com/jearton/openwrt-pro/releases/tag/v25.12.6-20261120.1) 基于既有 OpenWrt 25.12.6 x86/64 方案，含 469 个包。除 Netdata 2.13.0-r4、LuCI 0.1-r2 及随包界面资源，本轮没有改变既有网络功能、DNS 策略或终端认证方案。内核模块与打包内核 ABI 逐项匹配；`kmod-bonding` 保留。
+基于 OpenWrt 25.12.6 x86/64，含 469 个包。除 Netdata、LuCI 入口、概览及接口采集默认值，本轮未改变已有 DNS、终端认证或网络策略。全部包版本和内核模块 ABI 逐项匹配；`kmod-bonding` 保留。
 
 | 制品 | SHA256 |
 | --- | --- |
-| EFI gzip 镜像，173922242 字节 | `76f0261dc95be111813fe4e98a79b2cea81c39e718067b4f0163a90bdaa9503b` |
-| 原始镜像，2164555264 字节 | `0d9d0ad3d46da0b3f8d6c4b770c7591351f0d29d2d946d3e74cec6250b7cfac0` |
-| APK 清单 | `09cffda42952a347833b96df0f22e12fc18bcf64aa214bbcde7b6a0a5b3f4248` |
+| EFI gzip 镜像，173922628 字节 | `c0f28710b3f6430699772bf9b8d4f9cd888e88aafd7e4d71e4f681f0982dff11` |
+| 原始镜像，2164555264 字节 | `ad0e4952613fb7250480e00bf1e4129f64d4d2ad579f662bf0e862e9d32e56e8` |
+| APK 清单 | `b4890cfd9ca182b4d300861842c1733208afb33845b5d512fb2e427bc2b4152e` |
 
-同一镜像经过 189、PVE、Mac 校验。PVE 导入后的全新磁盘在首次启动前也与原始镜像 SHA256 一致。先前测试盘没有作为最终产物发布。
+189、PVE、Mac 的同一制品均校验一致。导入全新 disk-21 后，在首次启动前再次核对原始磁盘摘要一致。没有将配置过的实验盘作为发布产物。
 
-## 验收结果
+## 最终镜像验收
 
-在 9000 导入上述最终镜像到新磁盘首次启动，只设置实验 LAN 和实验登录凭证。验收时虚拟 WAN 网卡断开，路由器仅有实验 LAN 路由，**没有默认路由**；Mac Chrome 同时阻断所有非本地页面请求。
+9000 全新安装上述镜像，仅设置实验 LAN 和实验登录凭证。测试时 WAN 网卡断开，路由器只有实验 LAN 路由，**无默认路由**；自动化 Chrome 同时阻断非本地来源，Safari 使用实际 macOS 原生应用。
 
 | 项目 | 结果 | 证据 |
 | --- | --- | --- |
-| 最终镜像全新安装与默认自启 | 通过 | 实际运行 Netdata 2.13.0-r4、LuCI 0.1-r2；Netdata、ttyd 为 running |
-| 离线，无云账号 | 通过 | WAN 断开；全新 Chrome 加载随包资源，六个原生仪表与曲线显示；`/api/v3/me` 为 `auth:none`、云账号为 null |
-| 换浏览器自动加载预置布局 | 通过 | 两份相互独立的 Chrome 存储获得相同布局；实际 Safari 在新的来源首次访问也自动显示预置概览，没有手工导入 |
-| LuCI 默认页面与中文标题 | 通过 | 从实际“系统 → 实时监控”页面进入，标题为实时监控，iframe 自动进入原生 Dashboard |
-| 实时数据 | 通过 | CPU、RAM、系统磁盘 I/O、网络 API 返回有限数值并绘图，不仅检查 HTTP 200 |
-| 原生编辑和个人布局保留 | 通过 | 使用原生编辑器修改、Save 后重新进入默认入口，记录不被重置 |
-| 路由器离线重启 | 通过 | Netdata、ttyd 自动启动；旧浏览器保留修改且恢复实时 CPU 数值，全新浏览器自动初始化 |
-| 存储异常恢复 | 通过 | 禁止 IndexedDB 时出现恢复入口；未知记录保留，不覆盖 |
-| IPv6 和实验 LAN | 通过 | 内核 `ipv6.disable=1`，无 IPv6 地址文件；实验桥保持无物理上联，9001 保持关闭 |
+| 全新启动、自启 | 通过 | Netdata 2.13.0-r5、LuCI 0.1-r3；Netdata、ttyd 均 running |
+| 离线、无云账号 | 通过 | 本地资源显示六仪表和曲线；`/api/v3/me` 为 `auth:none`、云账号 null |
+| 换浏览器自动初始化 | 通过 | 两份独立 Chrome 存储布局相同；实际 Safari 首次访问自动加载概览、接口表和 RX/TX |
+| LuCI 默认入口、中文标题 | 通过 | 从实时监控进入原生 Dashboard，标题为“实时监控” |
+| 实时数据和逐接口图表 | 通过 | CPU/RAM/I/O/网络 API 有有限数值；10 个动态接口及实际试验流量验证 |
+| 原生编辑保存 | 通过 | 修改并 Save 后重新进入保留；本机函数重新绑定不覆盖个人记录 |
+| 离线重启 | 通过 | 服务自动启动；旧浏览器保留修改且接口表恢复；全新浏览器 8 项检查再次通过 |
+| 存储异常 | 通过 | 未知记录保留；拒绝 IndexedDB 时显示恢复入口 |
+| IPv6、实验隔离与清理 | 通过 | IPv6 禁用；桥无物理上联；9001 保持关闭；临时密钥、Agent、代理和转发均撤销 |
 
-[自动化浏览器结果](evidence/netdata-overview-20261120/browser.json)、[重启服务结果](evidence/netdata-overview-20261120/reboot.json)、[重启后原浏览器结果](evidence/netdata-overview-20261120/reboot-browser.json)。CI 的[仓库检查](https://github.com/jearton/openwrt-pro/actions/runs/44672136940)和[原生浏览器检查](https://github.com/jearton/openwrt-pro/actions/runs/44672137181)均通过。该浏览器 CI 使用独立 Linux Agent；PVE 的全新镜像验收是另外执行的，二者没有混称。
+[首次浏览器结果](evidence/netdata-overview-20261120/browser.json)、[LuCI](evidence/netdata-overview-20261120/luci.json)、[Safari](evidence/netdata-overview-20261120/safari.json)、[重启服务](evidence/netdata-overview-20261120/reboot.json)、[重启后原浏览器](evidence/netdata-overview-20261120/reboot-browser.json)、[重启后全新浏览器](evidence/netdata-overview-20261120/reboot-browser-fresh.json)。
 
-## 截图
-
-最终镜像的 LuCI 默认入口，尚未修改浏览器布局：
+代码提交 bf72ec0 的[原生浏览器 CI](https://github.com/jearton/openwrt-pro/actions/runs/44679379571)和[仓库 CI](https://github.com/jearton/openwrt-pro/actions/runs/44679379448)通过。浏览器 CI 使用独立 Linux Agent；189 的镜像构建、PVE 全新安装与 GitHub 完整源码构建是独立证据，不混称。此前[完整源码 CI 基线](https://github.com/jearton/openwrt-pro/actions/runs/44575439007)通过，不能将其称为本次 r5 的完整源码构建结果。
 
 ![LuCI 默认 System Overview](images/netdata-overview-20261120/luci-overview.png)
 
-使用原生编辑器修改后，路由器离线重启，原浏览器保留布局和实时图表：
+![实际 Safari 离线首次加载](images/netdata-overview-20261120/safari-overview.png)
 
-![重启后保留个人布局](images/netdata-overview-20261120/reboot-preserved.png)
+![离线重启后保留个人布局](images/netdata-overview-20261120/reboot-preserved.png)
 
 ## 边界与回滚
 
-本轮“通过”针对上述 Netdata 要求。实际物理温度、RPM、传感器驱动和吞吐性能未在 VM 中验收；没有指标时显示“未检测到指标”，不伪造零值。本轮 LuCI 嵌入验收使用 HTTP，未新增 HTTPS 监控嵌入适配。
+上述“通过”针对本轮 Netdata 要求。物理温度、RPM、驱动和吞吐性能未在 VM 验收；缺少传感器数据时显示“未检测到指标”，不伪造零值。LuCI 监控嵌入本轮使用 HTTP，未新增 HTTPS 适配。
 
-固件原有的 **Technitium DNSSEC 与默认 AliDNS DoH 对部分域名产生 SERVFAIL** 的问题仍未修复，见[既有扩展验收](vm-extended-validation-20261120.md)。不能据此报告固件所有功能全部通过。
+既有 **Technitium DNSSEC 与默认 AliDNS DoH 对部分域名返回 SERVFAIL** 的问题尚未修复，见[扩展验收](vm-extended-validation-20261120.md)。本次不能报告全部固件功能通过。
 
-升级前保留旧系统盘和配置。PVE 原 disk-16 保留，新镜像使用 disk-19；异常可在 9000 关机后切回原盘。物理机回滚优先使用保留的旧启动盘。当前浏览器个人布局可用原生编辑器导出；切换 Agent 版本前也应备份，不手工删除来源不明的浏览器记录。
+9000 保留最终 disk-21 运行，原 disk-16 以及中间测试盘保留；异常时关机切回旧盘。物理机升级前备份配置并保留旧启动盘。浏览器个人布局可用原生编辑器导出，不删除来源不明的记录。
 
-结束状态：9000 保留最终镜像 disk-19 运行，原 disk-16 作为回滚盘保留；验收用 WAN 断链已恢复，9001 仍关闭。13 台非目标 VM 配置和宿主路由逐项核对未变。[隔离回读](evidence/netdata-overview-20261120/isolation.json)。临时普通用户 Agent、浏览器代理和本次管理密钥在验收后关闭或撤销。
+验收后恢复实验 WAN 链路，9001 仍关闭；13 台非目标 VM 配置摘要、宿主路由和 9001 运行配置未变。9001 的说明文字回读从注释形式变成 description 字段，运行配置比较排除该显示格式差异，没有向该 VM 执行配置写入。[隔离回读](evidence/netdata-overview-20261120/isolation.json)、[清理结果](evidence/netdata-overview-20261120/cleanup.json)。

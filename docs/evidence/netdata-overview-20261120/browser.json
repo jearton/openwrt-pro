@@ -1,5 +1,5 @@
 {
-  "entry": "http://127.0.0.1:19999/openwrt-overview/?v=2.13.0-1",
+  "entry": "http://127.0.0.1:19999/openwrt-overview/?v=2.13.0-2",
   "externalRequests": [],
   "cases": [
     {
@@ -48,7 +48,17 @@
           "rows": 3
         }
       },
-      "cards": 19
+      "cards": 21
+    },
+    {
+      "name": "anonymous native interface table and separate per-instance RX/TX curves",
+      "status": "passed",
+      "interfaces": [
+        "lo",
+        "eth0",
+        "eth1",
+        "br-lan"
+      ]
     },
     {
       "name": "native editor save and repeat entry preserve customized layout",
@@ -56,6 +66,10 @@
     },
     {
       "name": "second empty browser storage automatically loads the same preset",
+      "status": "passed"
+    },
+    {
+      "name": "local interface function rebinding retains customized dashboard",
       "status": "passed"
     },
     {
@@ -71,5 +85,6 @@
       "status": "passed"
     }
   ],
+  "pageErrors": [],
   "status": "passed"
 }

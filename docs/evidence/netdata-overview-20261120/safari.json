@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "browser": "macOS Safari, actual native application",
+  "fresh_origin": "http://127.0.0.1:19999",
+  "wan_link_down": true,
+  "automatically_loaded_preset": true,
+  "cloud_login_performed": false,
+  "native_gauges_and_cpu_curve_visible": true,
+  "native_interface_table_and_separate_rx_tx_visible": true
+}
