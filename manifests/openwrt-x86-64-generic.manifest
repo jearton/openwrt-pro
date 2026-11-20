@@ -278,7 +278,7 @@ luci-app-filemanager - 26.288.56989~75a306d-r1
 luci-app-filetransfer - 0
 luci-app-firewall - 26.288.56989~75a306d
 luci-app-mwan3 - 26.288.56989~75a306d
-luci-app-netdata - 0.1-r1
+luci-app-netdata - 0.1-r2
 luci-app-netspeedtest - 0
 luci-app-nlbwmon - 26.288.56989~75a306d
 luci-app-oaf - 7.0-r2
@@ -351,7 +351,7 @@ mkf2fs - 1.16.0-r4
 mount-utils - 2.41.5-r1
 mtd - 27
 mwan3 - 3.6.12-r1
-netdata - 2.12.3-r3
+netdata - 2.13.0-r4
 netifd - 2026.02.26~cbb83a18-r2
 nftables-json - 1.1.6-r2
 nlbwmon - 2025.06.02~29236be6-r1

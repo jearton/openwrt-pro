@@ -1,0 +1,13 @@
+{
+  "status": "passed",
+  "other_vm_configs_unchanged": 13,
+  "client_9001_unchanged_and_stopped": true,
+  "host_routes_unchanged": true,
+  "isolated_bridge_members": [
+    "owrt9000p",
+    "tap9000i0"
+  ],
+  "router_disk": "vm-9000-disk-19.raw",
+  "original_disk_retained": "vm-9000-disk-16.raw",
+  "wan_link_restored": true
+}

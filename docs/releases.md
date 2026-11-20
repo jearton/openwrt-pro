@@ -3,22 +3,17 @@
 GitHub Packages 用 OCI 制品存储 EFI 固件、APK 清单和 SHA-256 校验和。使用 ORAS 下载并核对校验和：
 
 ```sh
-oras pull ghcr.io/jearton/openwrt-pro/firmware:v25.12.6-20261120
+oras pull ghcr.io/jearton/openwrt-pro/firmware:v25.12.6-20261120.1
 sha256sum -c SHA256SUMS
 ```
 
-也可以从 [v25.12.6-20261120 的 GitHub Release](https://github.com/jearton/openwrt-pro/releases/tag/v25.12.6-20261120) 直接下载镜像和 SHA-256。
+也可以从 [v25.12.6-20261120.1 的 GitHub Release](https://github.com/jearton/openwrt-pro/releases/tag/v25.12.6-20261120.1) 直接下载镜像和 SHA-256。
 
 安装或升级前，先在隔离环境复验 EFI 启动、IPv6 禁用、LuCI 和 DNS。保留旧磁盘和配置备份。具体步骤见[固件方案](firmware.md)。
 
-本次镜像由 189 Linux 构建并在独立虚拟机重新安装，发布工作流负责附件及 GHCR 的 SHA256 回拉校验。完整源码 CI 构建是单独的流程；它的运行状态不等同于本次原生构建验收结果。[验收记录与截图](acceptance-20261120.md)。
+本次镜像由 189 Linux 构建并在独立 VM 全新安装，完成 Netdata 预置概览的离线、无云账号、独立 Chrome/Safari 与重启验收。[本轮记录与截图](netdata-overview-acceptance-20261120.md)。完整源码 CI 构建和发布附件/GHCR 校验属于独立流程，不能将浏览器 CI 通过表述为完整源码 CI 已完成。
 
-
-本版[发布任务已成功](https://github.com/jearton/openwrt-pro/actions/runs/44578122539)，已按摘要拉回全部附件并核验；匿名读取 GHCR 也已核对同一镜像和清单。不可变引用：
-
-```sh
-oras pull ghcr.io/jearton/openwrt-pro/firmware@sha256:3bccca069bf973b0e3354eb7c5046da21fd7a295d920386158b301632e2cb49c
-```
+上一版 [v25.12.6-20261120](https://github.com/jearton/openwrt-pro/releases/tag/v25.12.6-20261120) 的附件和 OCI 摘要保持不变。
 
 ## 持续集成
 

@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "uptime": 13.67,
+  "recovery_seconds": 30.1,
+  "netdata_and_ttyd_self_start": true,
+  "no_default_route": true,
+  "ipv6_disabled": true,
+  "anonymous": true
+}
