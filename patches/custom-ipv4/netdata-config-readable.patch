@@ -4,7 +4,7 @@ diff --git a/package/custom/netdata/Makefile b/package/custom/netdata/Makefile
 @@ -2,7 +2,7 @@
  
  PKG_NAME:=netdata
- PKG_VERSION:=2.12.3
+ PKG_VERSION:=2.13.0
 -PKG_RELEASE:=1
 +PKG_RELEASE:=2
  PKG_LICENSE:=GPL-3.0-or-later

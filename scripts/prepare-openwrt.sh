@@ -30,7 +30,7 @@ for package in luci-app-weechat netdata; do
 done
 mkdir -p package/custom
 cp -a "$repo/packages/netdata" package/custom/
-for patch in netdata-config-readable netdata-container-network; do
+for patch in netdata-config-readable netdata-container-network netdata-overview; do
     git apply --check "$repo/patches/custom-ipv4/$patch.patch"
     git apply "$repo/patches/custom-ipv4/$patch.patch"
 done

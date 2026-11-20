@@ -4,7 +4,7 @@ diff --git a/package/custom/netdata/Makefile b/package/custom/netdata/Makefile
 @@ -2,7 +2,7 @@
  
  PKG_NAME:=netdata
- PKG_VERSION:=2.12.3
+ PKG_VERSION:=2.13.0
 -PKG_RELEASE:=2
 +PKG_RELEASE:=3
  PKG_LICENSE:=GPL-3.0-or-later
@@ -35,8 +35,8 @@ diff --git a/package/custom/netdata/Makefile b/package/custom/netdata/Makefile
 diff --git a/package/custom/netdata/extract-asset.sh b/package/custom/netdata/extract-asset.sh
 --- a/package/custom/netdata/extract-asset.sh
 +++ b/package/custom/netdata/extract-asset.sh
-@@ -7,6 +7,12 @@
- offset=$(head -n 830 "$asset" | wc -c)
+@@ -15,6 +15,12 @@
+ offset=$(head -n "$header_lines" "$asset" | wc -c)
  tail -c "+$((offset + 1))" "$asset" |
  	tar -xz -C "$destination" \
 -		./bin/srv/netdata ./usr/lib/netdata/conf.d ./usr/share/netdata/web

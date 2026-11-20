@@ -1,0 +1,102 @@
+name: Verify native Netdata overview
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/check-netdata.yml'
+      - 'packages/netdata/**'
+      - 'patches/custom-ipv4/netdata*.patch'
+      - 'scripts/check-netdata-overview.cjs'
+  pull_request:
+    paths:
+      - '.github/workflows/check-netdata.yml'
+      - 'packages/netdata/**'
+      - 'patches/custom-ipv4/netdata*.patch'
+      - 'scripts/check-netdata-overview.cjs'
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Prepare checksum-pinned native agent and overview
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/netdata-qa"
+          mkdir -p "$root/tree/package/custom" "$root/asset" "$root/state" "$root/config" "$root/cache" "$root/log" "$root/plugins"
+          cp -a packages/netdata "$root/tree/package/custom/"
+          git -C "$root/tree" init -q
+          for name in netdata-config-readable netdata-container-network netdata-overview; do
+            git -C "$root/tree" apply "$GITHUB_WORKSPACE/patches/custom-ipv4/$name.patch"
+          done
+          curl -fLsS --retry 3 --max-time 300 \
+            https://github.com/netdata/netdata/releases/download/v2.13.0/netdata-x86_64-v2.13.0.gz.run \
+            -o "$root/agent.run"
+          printf '%s  %s\n' bb0be18228b49c9c816b87193a070ed93defdd8e366368899e39cb7d005ca6f7 "$root/agent.run" | sha256sum --strict -c -
+          sh "$root/tree/package/custom/netdata/extract-asset.sh" "$root/agent.run" "$root/asset"
+          python3 packages/netdata/prepare-overview.py "$root/asset/usr/share/netdata/web"
+          cp -a packages/netdata/files/overview "$root/asset/usr/share/netdata/web/openwrt-overview"
+          cat > "$root/config/netdata.conf" <<EOF
+          [global]
+              hostname = OpenWrt
+              run as user = $USER
+              update every = 1
+          [directories]
+              config = $root/config
+              stock config = $root/asset/usr/lib/netdata/conf.d
+              stock data = $root/asset/usr/share/netdata
+              web = $root/asset/usr/share/netdata/web
+              cache = $root/cache
+              lib = $root/state
+              home = $root/state
+              log = $root/log
+              plugins = $root/plugins
+          [db]
+              mode = ram
+          [cloud]
+              enabled = no
+          [web]
+              bind to = 127.0.0.1:19999
+              allow connections from = localhost 127.0.0.1
+              allow dashboard from = localhost 127.0.0.1
+              web files owner = $USER
+              web files group = $(id -gn)
+          [plugins]
+              enable running new plugins = no
+              proc = yes
+              sysfs = yes
+          [logs]
+              daemon = stderr
+              collector = stderr
+              health = stderr
+              access = off
+          EOF
+          DISABLE_TELEMETRY=1 "$root/asset/bin/srv/netdata" -D -c "$root/config/netdata.conf" > "$root/agent.log" 2>&1 &
+          echo $! > "$root/agent.pid"
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:19999/api/v3/info > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:19999/api/v3/me
+      - name: Verify anonymous offline native charts and browser initialization
+        shell: bash
+        run: |
+          npm install --prefix "$RUNNER_TEMP/browser" --ignore-scripts --no-audit --no-fund playwright@1.62.1
+          export PLAYWRIGHT_MODULE="$RUNNER_TEMP/browser/node_modules/playwright"
+          export CHROME_EXECUTABLE="$(command -v google-chrome)"
+          test -x "$CHROME_EXECUTABLE"
+          node scripts/check-netdata-overview.cjs http://127.0.0.1:19999/openwrt-overview/ "$RUNNER_TEMP/netdata-qa/evidence"
+      - name: Stop owned test agent
+        if: always()
+        run: |
+          file="$RUNNER_TEMP/netdata-qa/agent.pid"
+          if test -f "$file"; then kill "$(cat "$file")" 2>/dev/null || true; fi

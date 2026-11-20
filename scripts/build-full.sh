@@ -76,7 +76,7 @@ done
 sed -i 's/^PKG_RELEASE:=1$/PKG_RELEASE:=2/' package/custom/quickstart/Makefile
 printf "\tlist module 'remoteDomain'\n" >> package/custom/quickstart/payload/etc/config/quickstart
 
-for name in netdata-config-readable netdata-container-network netdata-luci-bundled-dashboard; do
+for name in netdata-config-readable netdata-container-network netdata-overview netdata-luci-bundled-dashboard; do
     git apply "$patches/$name.patch"
 done
 for name in luci-nftables-legacy-warning luci-filemanager-layout; do
@@ -135,7 +135,8 @@ def versions(path):
 old, new = map(versions, sys.argv[1:3])
 old["kmod-bonding"] = old["kmod-macvlan"]
 old["ttyd"] = "1.7.7-r6"
-old["luci-app-netdata"] = "0.1-r1"
+old["netdata"] = "2.13.0-r4"
+old["luci-app-netdata"] = "0.1-r2"
 old["luci-i18n-netdata-zh-cn"] = "0.1"
 old["px5g-mbedtls"] = "11"
 old["openssl-util"] = "3.5.9-r1"
