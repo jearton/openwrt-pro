@@ -75,7 +75,12 @@ async function cache(page, replacement) {
     assert.equal(me.auth, 'none'); assert.equal(me.cloud_account_id, null);
     const values = {};
     for (const context of ['system.cpu', 'system.ram', 'system.io', 'system.net']) {
-      const response = await api(a.page, `api/v3/data?contexts=${context}&after=-45&points=3&format=json&options=jsonwrap`);
+      let response;
+      for (let attempt = 0; attempt < 25; attempt++) {
+        response = await api(a.page, `api/v3/data?contexts=${context}&after=-45&points=3&format=json&options=jsonwrap`);
+        if (response.result?.data?.some(row => row.slice(1).some(n => typeof n === 'number' && Number.isFinite(n)))) break;
+        await a.page.waitForTimeout(1000);
+      }
       assert(response.result?.data?.some(row => row.slice(1).some(n => typeof n === 'number' && Number.isFinite(n))), context);
       values[context] = {labels: response.result.labels, rows: response.result.data.length};
     }
