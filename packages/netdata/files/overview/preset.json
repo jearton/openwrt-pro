@@ -1,0 +1,456 @@
+{
+  "schema": 1,
+  "agentVersion": "2.13.0",
+  "templateVersion": 1,
+  "dashboard": {
+    "id": "local-custom-dashboard",
+    "slug": "local-custom-dashboard",
+    "isOwner": true,
+    "name": "System Overview"
+  },
+  "chartDefaults": {
+    "type": "chart",
+    "hideTitle": false,
+    "hideName": false,
+    "hideUnits": false,
+    "nodesScope": [],
+    "nodeFilters": {},
+    "spreadGroupId": null,
+    "spreadAxis": null,
+    "spreadLabelKey": null,
+    "spreadKey": null,
+    "valueFocus": null,
+    "aggregationMethod": "avg",
+    "groupBy": [
+      "dimension"
+    ],
+    "groupByLabel": [],
+    "postAggregationMethod": "avg",
+    "postGroupBy": [
+      "selected"
+    ],
+    "postGroupByLabel": [],
+    "groupingMethod": "average",
+    "groupingTime": 0,
+    "chartType": "area",
+    "chartLibrary": "dygraph",
+    "selectedDimensions": [],
+    "selectedLabels": [],
+    "selectedNodes": [],
+    "selectedInstances": [],
+    "sparkline": false,
+    "selectedLegendDimensions": [],
+    "showingInfo": false,
+    "dimensionsSortBy": [
+      {
+        "id": "contribution",
+        "desc": true
+      }
+    ],
+    "instancesSortBy": [
+      {
+        "id": "contribution",
+        "desc": true
+      }
+    ],
+    "nodesSortBy": [
+      {
+        "id": "contribution",
+        "desc": true
+      }
+    ],
+    "groupBySortBy": [],
+    "labelsSortBy": [
+      {
+        "id": "contribution",
+        "desc": true
+      }
+    ],
+    "dimensionsSort": "default",
+    "nodesExpanded": {},
+    "groupByExpanded": {},
+    "labelsExpanded": {},
+    "expanded": false,
+    "expandedHeight": 300,
+    "gaugeThresholds": null,
+    "overlays": {},
+    "description": null,
+    "showPostAggregations": false,
+    "desiredUnits": [
+      "auto"
+    ],
+    "valueRange": [
+      null,
+      null
+    ],
+    "staticValueRange": null,
+    "enabledYAxis": true,
+    "enabledXAxis": true,
+    "legend": true,
+    "staticFractionDigits": null,
+    "selectedNodeLabelsFilter": [],
+    "points": null
+  },
+  "cards": [
+    {
+      "id": "owrt-title",
+      "type": "text",
+      "textType": "title",
+      "textAlign": "left",
+      "text": "System Overview · 系统概览",
+      "layout": {
+        "left": 0,
+        "top": 0,
+        "width": 12,
+        "height": 1.5
+      }
+    },
+    {
+      "id": "owrt-disk-read",
+      "type": "chart",
+      "title": "磁盘读取",
+      "customTitle": "磁盘读取",
+      "contextScope": [
+        "system.io"
+      ],
+      "layout": {
+        "left": 0,
+        "top": 1.5,
+        "width": 1.7,
+        "height": 5
+      },
+      "chartLibrary": "easypiechart",
+      "selectedDimensions": [
+        "reads",
+        "in"
+      ],
+      "groupBy": [
+        "selected"
+      ],
+      "aggregationMethod": "sum",
+      "valueRange": [
+        0,
+        null
+      ],
+      "showPostAggregations": false,
+      "hideName": true,
+      "hideUnits": true
+    },
+    {
+      "id": "owrt-disk-write",
+      "type": "chart",
+      "title": "磁盘写入",
+      "customTitle": "磁盘写入",
+      "contextScope": [
+        "system.io"
+      ],
+      "layout": {
+        "left": 1.7,
+        "top": 1.5,
+        "width": 1.7,
+        "height": 5
+      },
+      "chartLibrary": "easypiechart",
+      "selectedDimensions": [
+        "writes",
+        "out"
+      ],
+      "groupBy": [
+        "selected"
+      ],
+      "aggregationMethod": "sum",
+      "valueRange": [
+        0,
+        null
+      ],
+      "showPostAggregations": false,
+      "hideName": true,
+      "hideUnits": true
+    },
+    {
+      "id": "owrt-cpu-gauge",
+      "type": "chart",
+      "title": "CPU 使用率",
+      "customTitle": "CPU 使用率",
+      "contextScope": [
+        "system.cpu"
+      ],
+      "layout": {
+        "left": 3.4,
+        "top": 1.5,
+        "width": 2.6,
+        "height": 5
+      },
+      "chartLibrary": "gauge",
+      "selectedDimensions": [],
+      "groupBy": [
+        "node"
+      ],
+      "aggregationMethod": "sum",
+      "valueRange": [
+        0,
+        100
+      ],
+      "showPostAggregations": true,
+      "hideName": true,
+      "hideUnits": true
+    },
+    {
+      "id": "owrt-ram-gauge",
+      "type": "chart",
+      "title": "内存使用率",
+      "customTitle": "内存使用率",
+      "contextScope": [
+        "system.ram"
+      ],
+      "layout": {
+        "left": 6,
+        "top": 1.5,
+        "width": 2.6,
+        "height": 5
+      },
+      "chartLibrary": "gauge",
+      "selectedDimensions": [
+        "used",
+        "buffers",
+        "active",
+        "wired",
+        "laundry"
+      ],
+      "groupBy": [
+        "percentage-of-instance"
+      ],
+      "aggregationMethod": "avg",
+      "valueRange": [
+        0,
+        100
+      ],
+      "showPostAggregations": true,
+      "hideName": true,
+      "hideUnits": true
+    },
+    {
+      "id": "owrt-net-in",
+      "type": "chart",
+      "title": "网络接收",
+      "customTitle": "网络接收",
+      "contextScope": [
+        "system.net"
+      ],
+      "layout": {
+        "left": 8.6,
+        "top": 1.5,
+        "width": 1.7,
+        "height": 5
+      },
+      "chartLibrary": "easypiechart",
+      "selectedDimensions": [
+        "received"
+      ],
+      "groupBy": [
+        "selected"
+      ],
+      "aggregationMethod": "sum",
+      "valueRange": [
+        0,
+        null
+      ],
+      "showPostAggregations": false,
+      "hideName": true,
+      "hideUnits": true
+    },
+    {
+      "id": "owrt-net-out",
+      "type": "chart",
+      "title": "网络发送",
+      "customTitle": "网络发送",
+      "contextScope": [
+        "system.net"
+      ],
+      "layout": {
+        "left": 10.3,
+        "top": 1.5,
+        "width": 1.7,
+        "height": 5
+      },
+      "chartLibrary": "easypiechart",
+      "selectedDimensions": [
+        "sent"
+      ],
+      "groupBy": [
+        "selected"
+      ],
+      "aggregationMethod": "sum",
+      "valueRange": [
+        0,
+        null
+      ],
+      "showPostAggregations": false,
+      "hideName": true,
+      "hideUnits": true
+    },
+    {
+      "id": "owrt-cpu-title",
+      "type": "text",
+      "textType": "title",
+      "textAlign": "left",
+      "text": "CPU",
+      "layout": {
+        "left": 0,
+        "top": 6.5,
+        "width": 12,
+        "height": 1
+      }
+    },
+    {
+      "id": "owrt-cpu",
+      "type": "chart",
+      "title": "CPU 使用率",
+      "customTitle": "CPU 使用率",
+      "contextScope": [
+        "system.cpu"
+      ],
+      "layout": {
+        "left": 0,
+        "top": 7.5,
+        "width": 12,
+        "height": 8
+      },
+      "chartType": "stacked",
+      "valueRange": [
+        0,
+        100
+      ]
+    },
+    {
+      "id": "owrt-memory-title",
+      "type": "text",
+      "textType": "title",
+      "textAlign": "left",
+      "text": "内存",
+      "layout": {
+        "left": 0,
+        "top": 15.5,
+        "width": 12,
+        "height": 1
+      }
+    },
+    {
+      "id": "owrt-memory",
+      "type": "chart",
+      "title": "内存分配",
+      "customTitle": "内存分配",
+      "contextScope": [
+        "system.ram"
+      ],
+      "layout": {
+        "left": 0,
+        "top": 16.5,
+        "width": 12,
+        "height": 7
+      },
+      "chartType": "stacked"
+    },
+    {
+      "id": "owrt-disk-title",
+      "type": "text",
+      "textType": "title",
+      "textAlign": "left",
+      "text": "磁盘",
+      "layout": {
+        "left": 0,
+        "top": 23.5,
+        "width": 12,
+        "height": 1
+      }
+    },
+    {
+      "id": "owrt-disk-io",
+      "type": "chart",
+      "title": "磁盘读写",
+      "customTitle": "磁盘读写",
+      "contextScope": [
+        "system.io"
+      ],
+      "layout": {
+        "left": 0,
+        "top": 24.5,
+        "width": 6,
+        "height": 7
+      }
+    },
+    {
+      "id": "owrt-disks",
+      "type": "chart",
+      "title": "各磁盘读写",
+      "customTitle": "各磁盘读写",
+      "contextScope": [
+        "disk.io"
+      ],
+      "layout": {
+        "left": 6,
+        "top": 24.5,
+        "width": 6,
+        "height": 7
+      },
+      "optional": true
+    },
+    {
+      "id": "owrt-network-title",
+      "type": "text",
+      "textType": "title",
+      "textAlign": "left",
+      "text": "网络",
+      "layout": {
+        "left": 0,
+        "top": 31.5,
+        "width": 12,
+        "height": 1
+      }
+    },
+    {
+      "id": "owrt-network",
+      "type": "chart",
+      "title": "网络收发",
+      "customTitle": "网络收发",
+      "contextScope": [
+        "system.net"
+      ],
+      "layout": {
+        "left": 0,
+        "top": 32.5,
+        "width": 6,
+        "height": 7
+      }
+    },
+    {
+      "id": "owrt-interfaces",
+      "type": "chart",
+      "title": "各网口流量",
+      "customTitle": "各网口流量",
+      "contextScope": [
+        "net.net"
+      ],
+      "layout": {
+        "left": 6,
+        "top": 32.5,
+        "width": 6,
+        "height": 7
+      },
+      "optional": true
+    },
+    {
+      "id": "owrt-sensors-title",
+      "type": "text",
+      "textType": "title",
+      "textAlign": "left",
+      "text": "硬件传感器",
+      "layout": {
+        "left": 0,
+        "top": 39.5,
+        "width": 12,
+        "height": 1
+      }
+    }
+  ]
+}

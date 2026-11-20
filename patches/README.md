@@ -4,7 +4,7 @@
 
 | 组件 | 补丁 |
 | --- | --- |
-| Netdata | [配置权限](custom-ipv4/netdata-config-readable.patch)、[容器网卡采集](custom-ipv4/netdata-container-network.patch)、[LuCI 本地仪表盘和「实时监控」标题](custom-ipv4/netdata-luci-bundled-dashboard.patch)；LuCI 包 0.1-r1 同步页面标题及中文翻译 |
+| Netdata | [配置权限](custom-ipv4/netdata-config-readable.patch)、[容器网卡采集](custom-ipv4/netdata-container-network.patch)、[原生概览打包](custom-ipv4/netdata-overview.patch)、[LuCI 本地仪表盘和「实时监控」标题](custom-ipv4/netdata-luci-bundled-dashboard.patch)；Netdata 2.13.0-r4 包含[本地模板与初始化适配](../packages/netdata/files/overview)、[CSP 与本地字体处理](../packages/netdata/prepare-overview.py)；LuCI 0.1-r2 默认打开原生概览。兼容性边界与验收见[记录](../docs/netdata-overview-acceptance-20261120.md) |
 | ttyd | [LAN 监听、LuCI 会话、WebSocket 权限校验和 DER/PEM 证书适配](custom-ipv4/ttyd-luci-session.patch)；r6 保留证书适配、每次系统登录及空密码拒绝；LuCI TLS 监听仅协商 HTTP/1.1，避开 Chrome HTTP/2 WebSocket 的 Origin 误拒绝；[配置迁移](../sources/full/files/etc/uci-defaults/93-ttyd-luci-session)；[LuCI 协议适配与自适应终端高度](../image-files/network-ui/www/luci-static/resources/view/ttyd/term.js) |
 | LuCI | [iptables 后端识别](custom-ipv4/luci-nftables-legacy-warning.patch)、[文件管理样式](custom-ipv4/luci-filemanager-layout.patch) |
 | Tailscale | [Tailscale 文件归属](custom-ipv4/tailscale-file-ownership.patch) |

@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netdata
-PKG_VERSION:=2.12.3
+PKG_VERSION:=2.13.0
 PKG_RELEASE:=1
 PKG_LICENSE:=GPL-3.0-or-later
 PKG_SOURCE:=netdata-x86_64-v$(PKG_VERSION).gz.run
 PKG_SOURCE_URL:=https://github.com/netdata/netdata/releases/download/v$(PKG_VERSION)
-PKG_HASH:=2b3c1afdf18ef788282108afc95ab8e7884c02cb94991b6f8de6ae49f98bd22c
+PKG_HASH:=bb0be18228b49c9c816b87193a070ed93defdd8e366368899e39cb7d005ca6f7
 
 include $(INCLUDE_DIR)/package.mk
 

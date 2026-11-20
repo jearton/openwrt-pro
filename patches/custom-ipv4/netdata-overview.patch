@@ -1,0 +1,29 @@
+diff --git a/package/custom/netdata/Makefile b/package/custom/netdata/Makefile
+--- a/package/custom/netdata/Makefile
++++ b/package/custom/netdata/Makefile
+@@ -2,7 +2,7 @@
+ 
+ PKG_NAME:=netdata
+ PKG_VERSION:=2.13.0
+-PKG_RELEASE:=3
++PKG_RELEASE:=4
+ PKG_LICENSE:=GPL-3.0-or-later
+ PKG_SOURCE:=netdata-x86_64-v$(PKG_VERSION).gz.run
+ PKG_SOURCE_URL:=https://github.com/netdata/netdata/releases/download/v$(PKG_VERSION)
+@@ -29,6 +29,7 @@
+ define Build/Prepare
+ 	mkdir -p $(PKG_BUILD_DIR)
+ 	sh ./extract-asset.sh "$(DL_DIR)/$(PKG_SOURCE)" "$(PKG_BUILD_DIR)"
++	python3 ./prepare-overview.py "$(PKG_BUILD_DIR)/usr/share/netdata/web"
+ endef
+ 
+ define Build/Compile
+@@ -46,6 +47,8 @@
+ 	chmod 0750 $(1)/opt/netdata/usr/libexec/netdata/plugins.d/cgroup-network*
+ 	$(CP) $(PKG_BUILD_DIR)/usr/lib/netdata/conf.d $(1)/opt/netdata/usr/lib/netdata/
+ 	$(CP) $(PKG_BUILD_DIR)/usr/share/netdata/web $(1)/opt/netdata/usr/share/netdata/
++	$(INSTALL_DIR) $(1)/opt/netdata/usr/share/netdata/web/openwrt-overview
++	$(INSTALL_DATA) ./files/overview/* $(1)/opt/netdata/usr/share/netdata/web/openwrt-overview/
+ 	$(INSTALL_DIR) $(1)/etc/netdata $(1)/etc/init.d
+ 	$(INSTALL_DATA) ./files/netdata.conf $(1)/etc/netdata/
+ 	$(INSTALL_BIN) ./files/netdata.init $(1)/etc/init.d/netdata

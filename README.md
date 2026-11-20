@@ -2,7 +2,7 @@
 
 基于 OpenWrt 25.12.6 x86/64 的 IPv4 路由器定制方案。使用 APK，内置 LuCI、实时监控和原生 Technitium DNS。默认禁用 IPv6，镜像验收使用独立实验 LAN。AdGuard Home 随镜像提供，默认停用。
 
-最新发布：[v25.12.6-20261120](https://github.com/jearton/openwrt-pro/releases/tag/v25.12.6-20261120)。含 `kmod-bonding`，Netdata、ttyd 默认自启；终端每次要求系统登录并填满窗口剩余高度。查看[本次验收与 Mac 截图](docs/acceptance-20261120.md)及[补丁清单](patches/README.md)。
+最新发布：[v25.12.6-20261120.1](https://github.com/jearton/openwrt-pro/releases/tag/v25.12.6-20261120.1)。新增 Netdata 2.13.0 原生 System Overview，预置布局可离线、无云账号、跨浏览器自动初始化；[本轮镜像验收](docs/netdata-overview-acceptance-20261120.md)。含 `kmod-bonding`，Netdata、ttyd 默认自启；终端每次要求系统登录并填满窗口剩余高度。查看[登录与终端基线验收](docs/acceptance-20261120.md)及[补丁清单](patches/README.md)。
 
 已知问题：扩展验收发现默认 AliDNS DoH 配合 Technitium DNSSEC 校验时，部分公网域名返回 SERVFAIL，尚未修复。不能将本版本标为全部功能验收通过；通过项目、实验配置和未验证范围见[VM 扩展验收](docs/vm-extended-validation-20261120.md)。
 
@@ -46,7 +46,7 @@
 
 ### 本项目的补丁和调整
 
-- **Netdata**补上容器网卡采集器和配套脚本，修正配置权限，LuCI 直接加载本地仪表盘。
+- **Netdata**补上容器网卡采集器和配套脚本，修正配置权限，LuCI 默认加载预置 System Overview；初始化浏览器原生 Dashboard，保留个人布局，限制资源为本地来源。
 - **LuCI**修正文件管理器布局和 iptables 后端识别，调整 DHCP/DNS、Macvlan 和实时监控的菜单入口。
 - **启动和首页**默认禁用 IPv6。Netdata 和 ttyd 随系统启动并监听 LAN。网页终端先校验 LuCI 会话和 WebSocket 来源，再要求每次输入系统用户名、密码；空密码不放行，并按窗口剩余高度展开。Quickstart 隐藏存储、下载和远程域名卡片。
 - **打包和兼容性**调整 Tailscale 配置文件归属、FileTransfer 的 APK 支持、EQoS 的 x86 构建、EQoS Plus 的 Bash 依赖、mwan3 的构建依赖，并固定 Technitium、Mihomo、DDNS-GO 和 Go 的构建输入。

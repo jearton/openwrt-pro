@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; object-src 'none'; base-uri 'self'">
+  <title>实时监控</title>
+  <link rel="stylesheet" href="overview.css?v=2.13.0-1">
+  <script src="bootstrap.js?v=2.13.0-1" defer></script>
+</head>
+<body>
+  <main>
+    <h1>实时监控</h1>
+    <p id="status" role="status">正在加载系统概览…</p>
+    <div id="recovery" hidden>
+      <button id="retry" type="button">重试</button>
+      <a href="../v3/">打开完整指标页</a>
+    </div>
+  </main>
+</body>
+</html>

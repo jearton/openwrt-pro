@@ -1,0 +1,14 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+body { margin: 0; background: #f3f4f6; color: #243047; }
+main { margin: 3rem auto; max-width: 38rem; padding: 2rem; border-radius: 1rem; background: #fff; }
+h1 { font-size: 1.6rem; margin: 0 0 1rem; }
+p { line-height: 1.7; }
+button, a { font: inherit; display: inline-block; padding: .6rem 1rem; border: 0; border-radius: .4rem; }
+button { background: #6269e8; color: #fff; cursor: pointer; }
+a { color: #424bc4; }
+[hidden] { display: none !important; }
+@media (prefers-color-scheme: dark) {
+  body { background: #101615; color: #e6eceb; }
+  main { background: #1b2322; }
+  a { color: #b5baff; }
+}

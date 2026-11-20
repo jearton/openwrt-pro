@@ -1,6 +1,6 @@
 # Netdata 实时监控界面对照
 
-后续已独立验证 Netdata 2.13.0 的内置自定义 Dashboard：匿名和浏览器侧断外网时可使用，但布局保存在浏览器 IndexedDB，换浏览器不会自动出现。固件预置和默认入口仍需额外方案，不能仅以新版支持 Dashboard 就宣布完成。详见[内置 Dashboard 实测](netdata-native-dashboard-validation-20261120.md)。
+最新实现已升级至 Netdata 2.13.0，保留原生 Dashboard，通过固件内置模板自动初始化每个新浏览器，并设为“实时监控”默认页面。离线、无云账号、独立浏览器和重启验证已通过，见[最终镜像验收](netdata-overview-acceptance-20261120.md)。下表保留此前版本与第三方截图的对照背景。
 
 2026-11-20 核查。用户提供的 Bleach OpenWrt 截图是经典 System Overview 仪表盘，本项目截图是带 Nodes、Metrics、Live、AI Insights 的新版仪表盘。仪表盘主体由 Netdata 的网页资源提供，LuCI 负责嵌入入口；不能仅凭相同的 luci-app 包名认定仪表盘版本相同。
 
