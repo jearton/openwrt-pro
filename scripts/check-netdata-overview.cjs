@@ -12,7 +12,7 @@ const entry = new URL(process.argv[2]);
 const out = path.resolve(process.argv[3] || 'netdata-acceptance');
 const base = new URL('../', entry);
 fs.mkdirSync(out, {recursive: true});
-const report = {entry: entry.href, externalRequests: [], cases: []};
+const report = {entry: entry.href, externalRequests: [], cases: [], pageErrors: []};
 
 async function cache(page, replacement) {
   return page.evaluate(replacement => new Promise((resolve, reject) => {
@@ -48,6 +48,7 @@ async function cache(page, replacement) {
       return route.abort('blockedbyclient');
     });
     const page = await context.newPage();
+    page.on('pageerror', e => report.pageErrors.push(e.message));
     current = page;
     return {context, page};
   }
@@ -81,6 +82,34 @@ async function cache(page, replacement) {
     await a.page.screenshot({path: path.join(out, 'overview.png')});
     report.cases.push({name: 'fresh anonymous browser, offline resources, native charts and live data', status: 'passed', values, cards: cards.length});
 
+    // Netdata intentionally delays new virtual interfaces for 40 seconds.
+    // Wait for discovery, then exercise the actual native table and both plots.
+    let interfaces;
+    for (let attempt = 0; attempt < 55; attempt++) {
+      interfaces = await api(a.page, 'api/v3/function?function=network-interfaces');
+      if (interfaces.data?.some(row => row[interfaces.columns.Interface.index] === 'lo')) break;
+      await a.page.waitForTimeout(1000);
+    }
+    const names = interfaces.data.map(row => row[interfaces.columns.Interface.index]);
+    assert(names.includes('lo'), 'Loopback must not be excluded by collector defaults');
+    for (const row of interfaces.data) {
+      assert(Number.isFinite(row[interfaces.columns.In.index]));
+      assert(Number.isFinite(row[interfaces.columns.Out.index]));
+    }
+    await a.page.getByTestId('dashboardGrid').evaluate(el => { el.scrollTop = 1500; });
+    await a.page.getByText('全部网络接口 · 实时流量', {exact: true}).waitFor();
+    await a.page.getByText('lo', {exact: true}).first().waitFor();
+    await a.page.screenshot({path: path.join(out, 'interfaces.png')});
+    await a.page.getByTestId('dashboardGrid').evaluate(el => { el.scrollTop = el.scrollHeight; });
+    await a.page.getByText('逐接口 接收 RX', {exact: true}).waitFor();
+    await a.page.getByText('逐接口 发送 TX', {exact: true}).waitFor();
+    await a.page.waitForFunction(() => document.querySelectorAll('canvas').length >= 4);
+    assert(!report.pageErrors.some(e => !/Failed to fetch/.test(e)), JSON.stringify(report.pageErrors));
+    await a.page.screenshot({path: path.join(out, 'interface-curves.png')});
+    report.cases.push({name: 'anonymous native interface table and separate per-instance RX/TX curves', status: 'passed', interfaces: names});
+    await a.page.getByTestId('dashboardGrid').evaluate(el => { el.scrollTop = 0; });
+    await a.page.getByText('System Overview · 系统概览', {exact: true}).waitFor();
+
     await a.page.getByTestId('dashboardHeader-edit-button').click();
     await a.page.getByPlaceholder('Untitled Dashboard').fill('Preserved local overview');
     await a.page.getByTestId('textCardForm').first().fill('Preserved CPU and network overview');
@@ -102,6 +131,18 @@ async function cache(page, replacement) {
     assert.equal(independent.value.name, 'System Overview');
     await b.context.close();
     report.cases.push({name: 'second empty browser storage automatically loads the same preset', status: 'passed'});
+
+    // A local function must recover when the agent identity changes, without
+    // replacing the user's saved layout or their native chart configuration.
+    const stale = structuredClone(saved);
+    const staleId = '00000000-0000-4000-8000-000000000001';
+    stale.value.snapshot.uiState.cards['owrt-interface-table'].selectedNodeIds = [staleId];
+    await cache(a.page, stale);
+    await a.page.evaluate(id => localStorage.setItem('openwrt-overview-local-node',
+      JSON.stringify({cardId: 'owrt-interface-table', nodeId: id, templateVersion: 2})), staleId);
+    await load(a.page, 'Preserved CPU and network overview');
+    assert.deepEqual(await cache(a.page), saved);
+    report.cases.push({name: 'local interface function rebinding retains customized dashboard', status: 'passed'});
 
     // User intentionally clearing a dashboard is also a saved customization.
     const empty = structuredClone(saved);

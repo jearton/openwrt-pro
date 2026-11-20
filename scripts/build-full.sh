@@ -135,8 +135,8 @@ def versions(path):
 old, new = map(versions, sys.argv[1:3])
 old["kmod-bonding"] = old["kmod-macvlan"]
 old["ttyd"] = "1.7.7-r6"
-old["netdata"] = "2.13.0-r4"
-old["luci-app-netdata"] = "0.1-r2"
+old["netdata"] = "2.13.0-r5"
+old["luci-app-netdata"] = "0.1-r3"
 old["luci-i18n-netdata-zh-cn"] = "0.1"
 old["px5g-mbedtls"] = "11"
 old["openssl-util"] = "3.5.9-r1"

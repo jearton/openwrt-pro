@@ -54,29 +54,57 @@
       value.snapshot && typeof value.snapshot === 'object';
   }
 
-  function initialize(db, dashboard) {
+  function initialize(db, dashboard, nodeId, templateVersion) {
     return new Promise((resolve, reject) => {
       // One transaction makes simultaneous first visits harmless. Never replace
       // a native saved record, including an intentionally empty user dashboard.
       const tx = db.transaction('netdata-cache', 'readwrite');
       const store = tx.objectStore('netdata-cache');
+      const bindingKey = 'openwrt-overview-local-node';
+      let binding;
+      try { binding = JSON.parse(localStorage.getItem(bindingKey)); } catch (_) { binding = null; }
+      let managedLocalFunction = false;
       const request = store.get(dashboard.id);
       request.onsuccess = () => {
         const row = request.result;
-        if (hasSavedDashboard(row, dashboard.id)) return;
+        if (hasSavedDashboard(row, dashboard.id)) {
+          const card = row.value.snapshot.uiState?.cards?.['owrt-interface-table'];
+          if (card?.selectedFn === 'network-interfaces:::0' &&
+              card.selectedNodeIds?.length === 1 && card.nodeScopeApplied === true) {
+            const previous = card.selectedNodeIds[0];
+            if (previous === nodeId) managedLocalFunction = true;
+            else if (previous === binding?.nodeId && binding.cardId === card.id) {
+              // The OpenWrt agent can get a new identity after a reboot. Rebind
+              // only our local function, retaining the user's layout/settings.
+              card.selectedNodeIds = [nodeId];
+              store.put(row, dashboard.id);
+              managedLocalFunction = true;
+            }
+          }
+          return;
+        }
         if (row != null && !(row.value && row.value.id === dashboard.id && row.value.version === 0)) {
           tx.abort();
           return;
         }
-        if (!hasSavedDashboard(row, dashboard.id))
+        if (!hasSavedDashboard(row, dashboard.id)) {
           store.put({value: dashboard, timestamp: Date.now()}, dashboard.id);
+          managedLocalFunction = true;
+        }
       };
-      tx.oncomplete = resolve;
+      tx.oncomplete = () => {
+        try {
+          if (managedLocalFunction) localStorage.setItem(bindingKey, JSON.stringify({
+            cardId: 'owrt-interface-table', nodeId, templateVersion
+          }));
+          resolve();
+        } catch (_) { reject(new Error('Browser local storage unavailable')); }
+      };
       tx.onabort = tx.onerror = () => reject(new Error('Dashboard initialization failed'));
     });
   }
 
-  function makeDashboard(preset, contexts) {
+  function makeDashboard(preset, contexts, nodeId) {
     if (preset.schema !== 1 || preset.dashboard.id !== 'local-custom-dashboard')
       throw new Error('Unsupported overview template');
     const cards = {};
@@ -84,7 +112,8 @@
     function add(spec) {
       const {layout: box, optional, ...card} = spec;
       if (optional && !card.contextScope.some(id => contexts[id])) return;
-      cards[card.id] = card.type === 'text' ? card : {...preset.chartDefaults, ...card};
+      cards[card.id] = card.type === 'chart' ? {...preset.chartDefaults, ...card} : card;
+      if (card.id === 'owrt-interface-table') cards[card.id].selectedNodeIds = [nodeId];
       layout.push({id: card.id, minWidth: 1, minHeight: 1, moved: false, ...box});
     }
     preset.cards.forEach(add);
@@ -97,13 +126,13 @@
     if (!fans.length) unavailable.push('风扇转速：未检测到指标');
     if (unavailable.length) add({id: 'owrt-sensor-status', type: 'text', textType: 'body',
       textAlign: 'left', text: unavailable.join('；') + '。当前硬件或采集器尚未提供这些数据。',
-      layout: {left: 0, top: 40.5, width: 12, height: 2}});
+      layout: {left: 0, top: preset.sensorLayout.statusTop, width: 12, height: 2}});
     if (temperatures.length) add({id: 'owrt-temperatures', type: 'chart',
       title: '温度', customTitle: '温度', contextScope: temperatures,
-      layout: {left: 0, top: 42.5, width: 6, height: 7}});
+      layout: {left: 0, top: preset.sensorLayout.chartTop, width: 6, height: 7}});
     if (fans.length) add({id: 'owrt-fans', type: 'chart', title: '风扇转速',
       customTitle: '风扇转速', contextScope: fans,
-      layout: {left: temperatures.length ? 6 : 0, top: 42.5, width: 6, height: 7}});
+      layout: {left: temperatures.length ? 6 : 0, top: preset.sensorLayout.chartTop, width: 6, height: 7}});
 
     const now = new Date().toISOString();
     return {...preset.dashboard, version: 1, disabled: false, createdAt: now, updatedAt: now,
@@ -119,7 +148,7 @@
     ]);
     const agent = info.agents && info.agents.find(item => item.ai === 0);
     const version = agent && agent.application && agent.application.package.version;
-    if (!version || version.replace(/^v/, '') !== preset.agentVersion || !agent.nm)
+    if (!version || version.replace(/^v/, '') !== preset.agentVersion || !agent.nm || !agent.mg)
       throw new Error('Unsupported monitor version');
     // Native 2.13 routes use its normalized space slug, not the display name
     // (the factory hostname "OpenWrt" becomes "openwrt").
@@ -134,7 +163,7 @@
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
     const db = await openCache();
-    try { await initialize(db, makeDashboard(preset, metadata.contexts)); }
+    try { await initialize(db, makeDashboard(preset, metadata.contexts, agent.mg), agent.mg, preset.templateVersion); }
     finally { db.close(); }
     // The path is the native local Dashboard route, with no cloud identity or
     // hardware-specific node IDs in the template.

@@ -6,7 +6,7 @@ diff --git a/package/custom/luci-app-netdata/Makefile b/package/custom/luci-app-
  LUCI_TITLE:=LuCI support for Netdata
  LUCI_DEPENDS:=+netdata
 +PKG_VERSION:=0.1
-+PKG_RELEASE:=2
++PKG_RELEASE:=3
 +PKG_PO_VERSION:=0.1
  
  include $(TOPDIR)/feeds/luci/luci.mk
@@ -20,7 +20,7 @@ diff --git a/package/custom/luci-app-netdata/htdocs/luci-static/resources/view/n
  			]),
  			E('iframe', {
 -				'src': 'http://' + window.location.hostname + ':19999',
-+				'src': 'http://' + window.location.hostname + ':19999/openwrt-overview/?v=2.13.0-1',
++				'src': 'http://' + window.location.hostname + ':19999/openwrt-overview/?v=2.13.0-2',
  				'style': 'width: 100%; min-height: 1200px; border: none; border-radius: 3px; resize: vertical;'
  			}, null)
  		]);

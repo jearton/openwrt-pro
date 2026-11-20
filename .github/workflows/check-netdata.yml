@@ -74,6 +74,8 @@ jobs:
               enable running new plugins = no
               proc = yes
               sysfs = yes
+          [plugin:proc:/proc/net/dev]
+              disable by default interfaces matching = !*
           [logs]
               daemon = stderr
               collector = stderr

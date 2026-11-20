@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "agentVersion": "2.13.0",
-  "templateVersion": 1,
+  "templateVersion": 2,
   "dashboard": {
     "id": "local-custom-dashboard",
     "slug": "local-custom-dashboard",
@@ -409,33 +409,106 @@
       }
     },
     {
-      "id": "owrt-network",
-      "type": "chart",
-      "title": "网络收发",
-      "customTitle": "网络收发",
-      "contextScope": [
-        "system.net"
-      ],
+      "id": "owrt-network-note",
+      "type": "text",
+      "textType": "body",
+      "textAlign": "left",
+      "text": "按接口名、类型筛选物理口、网桥、VLAN、veth、隧道、bond 与成员口。各接口分别显示 RX/TX；同一数据包会经过多个层，不能把所有接口直接相加当作总流量。",
       "layout": {
         "left": 0,
         "top": 32.5,
-        "width": 6,
-        "height": 7
+        "width": 12,
+        "height": 2
       }
     },
     {
-      "id": "owrt-interfaces",
+      "id": "owrt-interface-table",
+      "type": "function",
+      "flavour": "fn",
+      "selectedFn": "network-interfaces:::0",
+      "displayName": "network-interfaces",
+      "selectedNodeIds": [],
+      "visibleItems": [
+        "table"
+      ],
+      "fnType": "table",
+      "flowView": null,
+      "defaultCharts": [
+        [
+          "Traffic",
+          "Interface"
+        ],
+        [
+          "Traffic",
+          "Type"
+        ]
+      ],
+      "acceptedParams": [],
+      "columnVisibility": {},
+      "sortColumn": "",
+      "sortDirection": "descending",
+      "sortedColumns": [],
+      "pinnedColumns": [],
+      "groupByColumns": null,
+      "functionParamsFilters": {},
+      "pollingInterval": null,
+      "slice": true,
+      "hideTitle": false,
+      "customTitle": "全部网络接口 · 实时流量",
+      "histogramId": null,
+      "nodeScopeApplied": true,
+      "layout": {
+        "left": 0,
+        "top": 34.5,
+        "width": 12,
+        "height": 10
+      }
+    },
+    {
+      "id": "owrt-interface-rx",
       "type": "chart",
-      "title": "各网口流量",
-      "customTitle": "各网口流量",
+      "title": "逐接口 接收 RX",
+      "customTitle": "逐接口 接收 RX",
       "contextScope": [
         "net.net"
       ],
+      "groupBy": [
+        "instance"
+      ],
+      "aggregationMethod": "sum",
+      "selectedDimensions": [
+        "received"
+      ],
+      "chartType": "line",
+      "layout": {
+        "left": 0,
+        "top": 44.5,
+        "width": 6,
+        "height": 8
+      },
+      "optional": true
+    },
+    {
+      "id": "owrt-interface-tx",
+      "type": "chart",
+      "title": "逐接口 发送 TX",
+      "customTitle": "逐接口 发送 TX",
+      "contextScope": [
+        "net.net"
+      ],
+      "groupBy": [
+        "instance"
+      ],
+      "aggregationMethod": "sum",
+      "selectedDimensions": [
+        "sent"
+      ],
+      "chartType": "line",
       "layout": {
         "left": 6,
-        "top": 32.5,
+        "top": 44.5,
         "width": 6,
-        "height": 7
+        "height": 8
       },
       "optional": true
     },
@@ -447,10 +520,14 @@
       "text": "硬件传感器",
       "layout": {
         "left": 0,
-        "top": 39.5,
+        "top": 52.5,
         "width": 12,
         "height": 1
       }
     }
-  ]
+  ],
+  "sensorLayout": {
+    "statusTop": 53.5,
+    "chartTop": 55.5
+  }
 }
