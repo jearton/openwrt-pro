@@ -13,6 +13,14 @@ sha256sum -c SHA256SUMS
 
 本次镜像由 189 Linux 构建并在独立 VM 全新安装，完成 Netdata 预置概览的离线、无云账号、独立 Chrome/Safari 与重启验收。[本轮记录与截图](netdata-overview-acceptance-20261120.md)。完整源码 CI 构建和发布附件/GHCR 校验属于独立流程，不能将浏览器 CI 通过表述为完整源码 CI 已完成。
 
+本次[GHCR 发布工作流](https://github.com/jearton/openwrt-pro/actions/runs/44681488699)已完成：下载 Release、核对 tag 上清单、推送 OCI，并按摘要重新拉回验证。匿名访问也已核对 7 个 Release 附件摘要及 3 个 OCI layer。[发布证据](evidence/netdata-overview-20261120/publication.json)。不可变下载引用：
+
+```sh
+oras pull ghcr.io/jearton/openwrt-pro/firmware@sha256:18298a9616ea62f169e96cdfe7b7e475e988bc11e7e69f23d231d1edc65b2308
+```
+
+本次源码版本的[完整源码 CI 重建](https://github.com/jearton/openwrt-pro/actions/runs/44681072770)另外运行，不替代已经完成的 189 构建与最终镜像 VM 验收。
+
 上一版 [v25.12.6-20261120](https://github.com/jearton/openwrt-pro/releases/tag/v25.12.6-20261120) 的附件和 OCI 摘要保持不变。
 
 ## 持续集成

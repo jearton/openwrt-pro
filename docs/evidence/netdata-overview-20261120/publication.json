@@ -1,0 +1,8 @@
+{
+  "status": "passed",
+  "release": "https://github.com/jearton/openwrt-pro/releases/tag/v25.12.6-20261120.2",
+  "public_release_assets": 7,
+  "ghcr_anonymous_pull_metadata": true,
+  "oci_immutable_reference": "ghcr.io/jearton/openwrt-pro/firmware@sha256:18298a9616ea62f169e96cdfe7b7e475e988bc11e7e69f23d231d1edc65b2308",
+  "oci_layers_match_release_sha256": true
+}

@@ -68,7 +68,9 @@
 
 ![实际 Safari 离线首次加载](images/netdata-overview-20261120/safari-overview.png)
 
-![离线重启后保留个人布局](images/netdata-overview-20261120/reboot-preserved.png)
+截图补拍于离线重启验收完成、实验 WAN 链路恢复后；原浏览器仍保留个人修改。离线重启本身的服务、路由和浏览器证据见上文 JSON。
+
+![重启后保留个人布局](images/netdata-overview-20261120/reboot-preserved.png)
 
 ## 边界与回滚
 
@@ -79,3 +81,5 @@
 9000 保留最终 disk-21 运行，原 disk-16 以及中间测试盘保留；异常时关机切回旧盘。物理机升级前备份配置并保留旧启动盘。浏览器个人布局可用原生编辑器导出，不删除来源不明的记录。
 
 验收后恢复实验 WAN 链路，9001 仍关闭；13 台非目标 VM 配置摘要、宿主路由和 9001 运行配置未变。9001 的说明文字回读从注释形式变成 description 字段，运行配置比较排除该显示格式差异，没有向该 VM 执行配置写入。[隔离回读](evidence/netdata-overview-20261120/isolation.json)、[清理结果](evidence/netdata-overview-20261120/cleanup.json)。
+
+发布交付已通过[GHCR 工作流](https://github.com/jearton/openwrt-pro/actions/runs/44681488699)的完整附件下载、推送、按摘要拉回及 SHA256 核验；匿名发布摘要检查见[证据](evidence/netdata-overview-20261120/publication.json)。最终文档提交 8ad6dd0 的[浏览器 CI](https://github.com/jearton/openwrt-pro/actions/runs/44680887485)与[仓库 CI](https://github.com/jearton/openwrt-pro/actions/runs/44680887735)均通过。
